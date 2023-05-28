@@ -1,0 +1,6 @@
+.idea/
+dist/
+chatcmd.egg-info
+build/
+chatcmd/db.sqlite
+.DS_Store
