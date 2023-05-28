@@ -1,5 +1,5 @@
 # ChatCMD #
-#### **ChatCMD** is an AI-driven CLI-based command lookup using ChatGPT to lookup relevant CLI commands based on user input. ####
+#### **ChatCMD** is an open source AI-driven CLI-based command lookup using ChatGPT to lookup relevant CLI commands based on user input. ####
 
 #### Boost Your Productivity, ***Say Goodbye*** to Manual Searches ####
 
@@ -37,9 +37,9 @@ If pip not installed:
 Installation output should display:
 
     Collecting chatcmd
-    Using cached chatcmd-1.1.6-py3-none-any.whl (6.8 kB)
+    Using cached chatcmd-1.1.8-py3-none-any.whl (6.8 kB)
     Installing collected packages: chatcmd
-    Successfully installed chatcmd-1.1.6
+    Successfully installed chatcmd-1.1.8
 
 ### Upgrade ###
     pip3 install --upgrade chatcmd
@@ -130,8 +130,11 @@ To avoid the error message, you can use the "-no-copy" option when looking up a 
 [Issues](https://github.com/naifalshaye/chatcmd/issues)
 
 
-Developed and maintained by:
-Naif Alshaye | [https://naif.io](https://naif.io)
+Developed and maintained by:\
+Naif Alshaye\
+[https://naif.io](https://naif.io)\
+naif@naif.io
+
 
 
 ## License

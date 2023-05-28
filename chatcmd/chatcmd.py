@@ -8,7 +8,7 @@
     ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
      ######  ##     ## ##     ##    ##     ######  ##     ## ########
    --------------------------------------------------------------------
-                AI-driven CLI command lookup using ChatGPT
+           Open Source AI-driven CLI command lookup using ChatGPT
           Boost Your Productivity, Say Goodbye to Manual Searches
    --------------------------------------------------------------------
                Developed By: Naif Alshaye | https://naif.io
@@ -59,7 +59,7 @@ def main():
         openai.api_key = api_key
 
         if args['--version']:
-            print('ChatCMD'+' 1.1.6')
+            print('ChatCMD'+' 1.1.8')
         elif args['--set-key']:
             ask_for_api_key(conn, cursor)
         elif args['--get-key']:
