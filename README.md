@@ -131,7 +131,7 @@ To avoid the error message, you can use the "-no-copy" option when looking up a 
 
 
 Developed and maintained by:
-[Naif Alshaye](https://naif.io) | [https://naif.io](https://naif.io)
+Naif Alshaye | [https://naif.io](https://naif.io)
 
 
 ## License
