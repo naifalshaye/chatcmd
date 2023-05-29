@@ -1,4 +1,9 @@
 # ChatCMD #
+
+[![PyPI version](https://img.shields.io/pypi/v/chatcmd.svg?style=flat-square)](https://pypi.org/project/chatcmd)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/chatcmd.svg?style=flat-square)](https://pypi.org/project/chatcmd)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://en.wikipedia.org/wiki/MIT_License)
+
 #### **ChatCMD** is an open source AI-driven CLI-based command lookup using ChatGPT to lookup relevant CLI commands based on user input. ####
 
 #### Boost Your Productivity, ***Say Goodbye*** to Manual Searches ####
