@@ -4,3 +4,10 @@ chatcmd.egg-info
 build/
 chatcmd/db.sqlite
 .DS_Store
+chatcmd/__pycache__/
+chatcmd/api/__pycache__/
+chatcmd/commands/__pycache__/
+chatcmd/features/__pycache__/
+chatcmd/helpers/__pycache__/
+chatcmd/images/chatcmd.mov
+chatcmd/lookup/__pycache__/

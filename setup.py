@@ -1,4 +1,4 @@
-from setuptools import setup,find_packages
+from setuptools import setup
 
 with open('README.md') as f:
     readme = f.read()
@@ -6,7 +6,8 @@ with open('README.md') as f:
 setup(
     name="chatcmd",
     version="1.1.8",
-    description="ChatCMD is an AI-driven CLI-based command lookup using ChatGPT to lookup relevant CLI commands based on user input.",
+    description="ChatCMD is an AI-driven CLI-based command lookup using ChatGPT to lookup relevant"
+                " CLI commands based on user input.",
     long_description=readme,
     long_description_content_type='text/markdown',
     author="Naif Alshaye",
@@ -15,6 +16,7 @@ setup(
     install_requires=[
         "docopt",
         "openai",
-        "pyperclip"
+        "pyperclip",
+        "requests"
     ],
 )

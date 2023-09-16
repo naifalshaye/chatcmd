@@ -2,7 +2,8 @@
 requires = [
     "setuptools >= 65",
     "wheel >= 0.38",
-    "pyperclip >=1.8.2",
+    "pyperclip >= 1.8.2",
+    "requests >= 2.31.0 "
 ]
 build-backend = "setuptools.build_meta"
 
@@ -50,4 +51,4 @@ dependencies = [
 "Bug Tracker" = "https://github.com/naifalshaye/chatcmd/issues"
 
 [project.scripts]
-chatcmd = "chatcmd.chatcmd:main"
+chatcmd = "chatcmd.chatcmd_init:main"
