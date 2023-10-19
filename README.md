@@ -4,12 +4,19 @@
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/chatcmd.svg?style=flat-square)](https://pypi.org/project/chatcmd)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://en.wikipedia.org/wiki/MIT_License)
 
-#### **ChatCMD** is an open source AI-driven CLI-based command lookup using ChatGPT to lookup relevant CLI commands based on user input. ####
+#### **ChatCMD** is an open source AI-driven CLI-based command lookup using ChatGPT to lookup relevant CLI commands based on user input and other generating and lookup features. ####
 
 #### Boost Your Productivity, ***Say Goodbye*** to Manual Searches ####
 
 ## Features ##
 - CLI-based command lookup using ChatGPT.
+- Generate SQL query using ChatGPT.
+- Generate a random user-agent.
+- Generate a random password.
+- Get your public IP address.
+- Get a color Hex code by describing the color.
+- Lookup HTTP Code.
+- Lookup any port number
 - Auto copy command to clipboard.
 - Disable copy feature.
 - Store Data in Sqlite Database.
@@ -42,9 +49,9 @@ If pip not installed:
 Installation output should display:
 
     Collecting chatcmd
-    Using cached chatcmd-1.1.8-py3-none-any.whl (6.8 kB)
+    Using cached chatcmd-1.1.9-py3-none-any.whl (6.8 kB)
     Installing collected packages: chatcmd
-    Successfully installed chatcmd-1.1.8
+    Successfully installed chatcmd-1.1.9
 
 ### Upgrade ###
     pip3 install --upgrade chatcmd
@@ -67,6 +74,14 @@ Usage:
 chatcmd [options]
   
 Options:
+  -l, --lookup-cmd                  looking up a CLI command.
+  -q, --sql-query                   generate SQL query.
+  -u, --random-useragent            generate a random user-agent
+  -i, --get-ip                      get your public IP address.
+  -p, --random-password             generate a random password.
+  -c, --color-code                  get a color Hex code.
+  -a, --lookup-http-code            lookup HTTP Code by code number.
+  -z, --port-lookup                 lookup any port number.
   -k, --set-key                     set or update ChatGPT API key.
   -o, --get-key                     display ChatGPT API key.
   -g, --get-cmd                     display the last command.
@@ -74,12 +89,12 @@ Options:
   -d, --delete-cmd                  delete the last command.
   -D, --delete-last-cmd=<value>     delete the last [number] of commands.
   -t, --cmd-total                   display the total number of commands.
-  -c, --clear-history               clear all history records.
+  -r, --clear-history               clear all history records.
   -s, --db-size                     display the database size.
-  -h, --help                        display this screen.
   -n, --no-copy                     disable copy feature.
+  -h, --help                        display this screen.
   -v, --version                     display ChatCMD version.
-  -i, --library-info                display library information.
+  -x, --library-info                display library information.
 
 ```
 

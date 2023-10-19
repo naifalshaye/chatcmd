@@ -31,12 +31,12 @@ class Helpers:
 
     @staticmethod
     def clear_input(self, input):
-        input = re.sub('[^a-zA-Z0-9 -_=]', '', input.strip())
+        input = input.strip()
         return input
 
     @staticmethod
     def validate_input(self, prompt):
-        pattern = r'^[A-Za-z0-9 ]+$'
+        pattern = r'^[A-Za-z0-9 _\-@$\.]+$'
         if re.match(pattern, str(prompt)):
             return True
 
