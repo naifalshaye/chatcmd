@@ -1,9 +1,22 @@
 import re
 import inspect
 import subprocess
+import requests
+import importlib.metadata
 
 
 class Helpers:
+
+    @staticmethod
+    def get_latest_version_from_pypi():
+        response = requests.get(f"https://pypi.org/pypi/chatcmd/json")
+        data = response.json()
+        latest_version = data["info"]["version"]
+        installed_version = importlib.metadata.version('chatcmd')
+
+        if installed_version != latest_version:
+            print(f"New version {latest_version} is available! You are currently using version {installed_version}.")
+            print("Consider upgrading using: pip3 install --upgrade chatcmd")
 
     @staticmethod
     def library_info(self):

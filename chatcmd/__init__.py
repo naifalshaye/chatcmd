@@ -47,10 +47,10 @@ from chatcmd.lookup import Lookup
 from chatcmd.api import API
 from chatcmd.commands import CMD
 from chatcmd.features import Features
-import pyperclip
 
 import os
 import sqlite3
+import importlib.metadata
 
 lookup = Lookup()
 api = API()
@@ -71,6 +71,7 @@ class ChatCMD:
 
     def cmd(self):
         try:
+            helpers.get_latest_version_from_pypi()
             api_key = api.get_api_key(self, self.conn, self.cursor)
 
             if api_key is None:
@@ -117,7 +118,7 @@ class ChatCMD:
             elif self.args['--no-copy']:
                 lookup.prompt(self.conn, self.cursor, api_key, True)
             elif self.args['--version']:
-                print('ChatCMD' + ' 1.1.10')
+                print('ChatCMD ' + importlib.metadata.version('chatcmd'))
             else:
                 print(__doc__)
                 exit(0)

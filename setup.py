@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 setup(
     name="chatcmd",
-    version="1.1.9",
+    version="1.1.13",
     description="ChatCMD is an AI-driven CLI-based command lookup using ChatGPT to lookup relevant"
                 " CLI commands based on user input.",
     long_description=readme,
