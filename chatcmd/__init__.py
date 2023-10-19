@@ -117,7 +117,7 @@ class ChatCMD:
             elif self.args['--no-copy']:
                 lookup.prompt(self.conn, self.cursor, api_key, True)
             elif self.args['--version']:
-                print('ChatCMD' + ' 1.1.9')
+                print('ChatCMD' + ' 1.1.10')
             else:
                 print(__doc__)
                 exit(0)

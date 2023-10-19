@@ -17,6 +17,7 @@ setup(
         "docopt",
         "openai",
         "pyperclip",
-        "requests"
+        "requests",
+        "fake_useragent"
     ],
 )
