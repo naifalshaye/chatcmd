@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import pyperclip
 import platform
 from chatcmd.commands import CMD
@@ -66,22 +66,30 @@ class Lookup:
             prompt = prompt
             print("Looking up...\n")
 
+            client = OpenAI(
+                # This is the default and can be omitted
+                api_key=api_key,
+            )
             # stop_keywords = ["###", "END", "stop", "Command:", "Syntax:", "Usage:", "Windows is:", "is:"]
-            response = openai.Completion.create(
-                engine='text-davinci-003',
-                prompt=f"Please help me with a CLI command lookup, I only need the command without"
-                       f" any extra information: Show me the command for {prompt}",
+            completion = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                # prompt=f"Please help me with a CLI command lookup, I only need the command without"
+                #        f" any extra information: Show me the command for {prompt}",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f" any extra information: Show me the command for {prompt}",
+                    }
+                ],
                 max_tokens=70,
                 n=1,
                 stop=None,
                 temperature=0.7)
-            message = response.choices[0].text.strip()
+            message = completion.choices[0].message.content.strip()
             return message
 
-        except openai.error.OpenAIError as e:
-            print(f"Error 1010: OpenAI API error occurred: {e}. Please double check your API Key.")
         except Exception as e:
-            print(f"Error 1011: Unhandled exception occurred: {e}")
+            print(f"Error 1011: OpenAI API error occurred: {e}")
 
     def prompt_sql(self, conn, cursor, api_key, no_copy):
         print("""

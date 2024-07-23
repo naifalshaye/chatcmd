@@ -15,7 +15,7 @@ setup(
     url="https://github.com/naifalshaye/chatcmd",
     install_requires=[
         "docopt",
-        "openai",
+        'openai>=1.0.0',
         "pyperclip",
         "requests",
         "fake_useragent"

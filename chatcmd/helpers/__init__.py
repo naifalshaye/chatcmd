@@ -59,8 +59,8 @@ class Helpers:
     def validate_api_key(self, api_key):
         if api_key[0:3] != 'sk-':
             return False
-        if len(api_key) != 51:
-            return False
+        # if len(api_key) != 51:
+        #     return False
         if not re.match("^[a-zA-Z0-9-]+$", api_key):
             return False
         return True
