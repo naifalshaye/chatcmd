@@ -6,15 +6,15 @@ import os
 class CMD:
 
     @staticmethod
-    def add_cmd(conn, cursor, prompt, command):
+    def add_cmd(conn, cursor, prompt, command, model_name=None, provider_name=None):
         try:
             cursor.execute(
                 "CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY, "
-                "prompt TEXT, command TEXT, created_at DATETIME)")
+                "prompt TEXT, command TEXT, model_name TEXT, provider_name TEXT, created_at DATETIME)")
             conn.commit()
 
-            cursor.execute("INSERT INTO history (prompt,command,created_at) VALUES(?,?,?)",
-                           (prompt, command, datetime.datetime.now()))
+            cursor.execute("INSERT INTO history (prompt,command,model_name,provider_name,created_at) VALUES(?,?,?,?,?)",
+                           (prompt, command, model_name, provider_name, datetime.datetime.now()))
             conn.commit()
 
             return True
@@ -25,11 +25,12 @@ class CMD:
     @staticmethod
     def get_cmd(cursor):
         try:
-            cursor.execute("SELECT prompt, command, created_at FROM history ORDER BY id DESC LIMIT 1")
+            cursor.execute("SELECT prompt, command, model_name, provider_name, created_at FROM history ORDER BY id DESC LIMIT 1")
             command = cursor.fetchone()
 
             if command is not None:
-                print("Latest Command:\n\n " + command[0] + ": " + command[1] + "\n")
+                model_info = f" ({command[2]})" if command[2] else ""
+                print("Latest Command:\n\n " + command[0] + ": " + command[1] + model_info + "\n")
             else:
                 print("History is empty.")
 
