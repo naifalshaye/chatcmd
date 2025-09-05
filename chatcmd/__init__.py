@@ -49,7 +49,7 @@ Options:
   --performance-stats               show model performance statistics
 """
 
-import openai
+from openai import OpenAI
 from docopt import docopt
 from chatcmd.helpers import Helpers
 from chatcmd.lookup import Lookup
@@ -154,7 +154,6 @@ class ChatCMD:
             api_key = api.get_api_key(self, self.conn, self.cursor)
             if api_key is None:
                 api_key = api.ask_for_api_key(self, self.conn, self.cursor)
-            openai.api_key = api_key
 
             if self.args['--lookup-cmd']:
                 if selected_model:
