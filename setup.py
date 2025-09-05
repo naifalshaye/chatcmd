@@ -16,6 +16,9 @@ setup(
     install_requires=[
         "docopt",
         'openai>=1.0.0',
+        'anthropic>=0.7.0',
+        'google-generativeai>=0.3.0',
+        'cohere>=4.0.0',
         "pyperclip",
         "requests",
         "fake_useragent"
