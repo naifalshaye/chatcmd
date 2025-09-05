@@ -145,17 +145,25 @@ class Lookup:
             prompt = prompt
             print("Writing SQL query...\n")
 
-            response = openai.Completion.create(
-                engine='text-davinci-003',
-                prompt=f"Act like a database engineer and write a query that {prompt}",
+            client = OpenAI(
+                api_key=api_key,
+            )
+            completion = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Act like a database engineer and write a query that {prompt}",
+                    }
+                ],
                 max_tokens=70,
                 n=1,
                 stop=None,
                 temperature=0.7)
-            response = response.choices[0].text.strip()
+            response = completion.choices[0].message.content.strip()
             return response
 
-        except openai.error.OpenAIError as e:
+        except Exception as e:
             print(f"Error 1010: OpenAI API error occurred: {e}. Please double check your API Key.")
         except Exception as e:
             print(f"Error 1011: Unhandled exception occurred: {e}")
@@ -212,17 +220,25 @@ class Lookup:
             prompt = prompt
             print("Getting color code...\n")
 
-            response = openai.Completion.create(
-                engine='text-davinci-003',
-                prompt=f"What is the HEX code for this color, return code only: {prompt}",
+            client = OpenAI(
+                api_key=api_key,
+            )
+            completion = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"What is the HEX code for this color, return code only: {prompt}",
+                    }
+                ],
                 max_tokens=70,
                 n=1,
                 stop=None,
                 temperature=0.7)
-            response = response.choices[0].text.strip()
+            response = completion.choices[0].message.content.strip()
             return response
 
-        except openai.error.OpenAIError as e:
+        except Exception as e:
             print(f"Error 1010: OpenAI API error occurred: {e}. Please double check your API Key.")
         except Exception as e:
             print(f"Error 1011: Unhandled exception occurred: {e}")
@@ -236,18 +252,25 @@ class Lookup:
             prompt = helpers.clear_input(self, input("Port: "))
             prompt = prompt
 
-            response = openai.Completion.create(
-                engine='text-davinci-003',
-                # prompt=f"What is this port, return port meaning only: {prompt}",
-                prompt=f"lookup this port: {prompt}",
+            client = OpenAI(
+                api_key=api_key,
+            )
+            completion = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"lookup this port: {prompt}",
+                    }
+                ],
                 max_tokens=70,
                 n=1,
                 stop=None,
                 temperature=0.7)
-            response = response.choices[0].text
+            response = completion.choices[0].message.content
             print(response)
 
-        except openai.error.OpenAIError as e:
+        except Exception as e:
             print(f"Error 1010: OpenAI API error occurred: {e}. Please double check your API Key.")
         except Exception as e:
             print(f"Error 1011: Unhandled exception occurred: {e}")
