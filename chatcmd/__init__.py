@@ -54,7 +54,7 @@ Options:
   --markdown-table                  generate markdown table.
   --curl-command                    generate curl command for API testing.
   
-  # New Multi-Model Options:
+  # Multi-Model Options:
   -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
   --list-models                     list all available AI models
   --model-info <model>              show information about a specific model
