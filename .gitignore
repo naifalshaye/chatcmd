@@ -19,3 +19,25 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Database files
+*.sqlite
+*.db
+chatcmd/db.sqlite
+
+# Environment files
+.env
+.venv/
+venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
