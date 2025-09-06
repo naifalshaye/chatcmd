@@ -56,23 +56,34 @@ class OpenAIProvider(BaseAIProvider):
             return None
             
         except Exception as e:
-            print(f"OpenAI API error: {e}")
+            error_info = self._parse_api_error(e)
+            print(f"OpenAI API Error:")
+            print(f"  Code: {error_info['code']}")
+            print(f"  Type: {error_info['type']}")
+            print(f"  Message: {error_info['message']}")
             return None
     
     def validate_api_key(self) -> bool:
         """
-        Validate OpenAI API key
+        Validate OpenAI API key format
         
         Returns:
-            True if API key is valid, False otherwise
+            True if API key format is valid, False otherwise
         """
         try:
-            # Test the API key with a simple request
-            response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": "test"}],
-                max_tokens=1
-            )
+            # Basic format validation without making API calls
+            if not self.api_key or len(self.api_key) < 20:
+                return False
+            
+            # Check if it starts with sk- (including sk-proj-)
+            if not self.api_key.startswith('sk-'):
+                return False
+            
+            # Check if it contains only valid characters
+            import re
+            if not re.match("^[a-zA-Z0-9-_]+$", self.api_key):
+                return False
+            
             return True
         except Exception:
             return False
@@ -109,3 +120,89 @@ class OpenAIProvider(BaseAIProvider):
                 return line
         
         return None
+    
+    def _parse_api_error(self, error) -> dict:
+        """
+        Parse OpenAI API error into human-readable format
+        
+        Args:
+            error: Exception object from OpenAI API
+            
+        Returns:
+            Dictionary with parsed error information
+        """
+        try:
+            # Extract error details from the exception
+            error_str = str(error)
+            
+            # Default error info
+            error_info = {
+                'code': 'unknown',
+                'type': 'unknown_error',
+                'message': error_str
+            }
+            
+            # Try to extract error code
+            if 'Error code:' in error_str:
+                code_match = error_str.split('Error code:')[1].split(' -')[0].strip()
+                error_info['code'] = code_match
+            
+            # Try to extract error details from JSON-like string
+            if '{' in error_str and '}' in error_str:
+                try:
+                    import json
+                    import re
+                    
+                    # Find the JSON part after "Error code: XXX -"
+                    if 'Error code:' in error_str and ' - ' in error_str:
+                        json_start = error_str.find(' - ') + 3
+                        json_str = error_str[json_start:].strip()
+                        
+                        # Convert single quotes to double quotes for valid JSON
+                        json_str = json_str.replace("'", '"')
+                        # Convert Python None to JSON null
+                        json_str = json_str.replace('None', 'null')
+                        
+                        try:
+                            error_data = json.loads(json_str)
+                            if 'error' in error_data:
+                                error_obj = error_data['error']
+                                error_info['code'] = error_obj.get('code', error_info['code'])
+                                error_info['type'] = error_obj.get('type', error_info['type'])
+                                error_info['message'] = error_obj.get('message', error_info['message'])
+                        except json.JSONDecodeError:
+                            pass
+                except Exception:
+                    pass
+            
+            # Map common error codes to human-readable messages
+            error_messages = {
+                '429': 'Rate limit exceeded - too many requests',
+                '401': 'Invalid API key or authentication failed',
+                '403': 'Access forbidden - check your API key permissions',
+                '404': 'Model not found or endpoint not available',
+                '500': 'Internal server error - try again later',
+                'insufficient_quota': 'You have exceeded your current quota - please check your billing and add credits',
+                'invalid_api_key': 'The API key provided is invalid',
+                'rate_limit_exceeded': 'Too many requests - please wait before trying again'
+            }
+            
+            # Special handling for quota errors
+            if error_info['type'] == 'insufficient_quota' or 'quota' in error_info['message'].lower():
+                error_info['message'] = 'You have exceeded your current quota - please check your billing and add credits to your OpenAI account'
+            
+            # Override message if we have a better one
+            if error_info['code'] in error_messages:
+                error_info['message'] = error_messages[error_info['code']]
+            elif error_info['type'] in error_messages:
+                error_info['message'] = error_messages[error_info['type']]
+            
+            return error_info
+            
+        except Exception:
+            # Fallback to basic error info
+            return {
+                'code': 'unknown',
+                'type': 'parsing_error',
+                'message': str(error)
+            }

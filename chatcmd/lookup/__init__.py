@@ -22,27 +22,28 @@ class Lookup:
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             Lookup CLI Commands
         """)
-        if helpers.validate_api_key(self, api_key) is False:
+        if helpers.validate_api_key(api_key) is False:
             print("Error 1009: API key is invalid or missing")
-        prompt = helpers.clear_input(self, input("Prompt: "))
+        prompt = helpers.clear_input(input("Prompt: "))
 
         if prompt == '':
-            prompt(conn, cursor, api_key)
+            self.prompt(conn, cursor, api_key, no_copy)
+            return
         if prompt == 'exit':
             print('bye...')
-            exit()
+            return
         else:
             word_list = prompt.strip().split()
             if len(word_list) >= 3:
-                command = self.lookup(self, prompt, api_key)
+                command = self.lookup(prompt, api_key)
                 if command is not None:
                     if not no_copy:
                         if platform.system() == "Linux":
-                            helpers.copy_to_clipboard(self, command)
+                            helpers.copy_to_clipboard(command)
                         else:
                             pyperclip.copy(command)
 
-                    command = helpers.clear_input(self, command)
+                    command = helpers.clear_input(command)
 
                     if command.find('there is no command') is True and command.find(
                             'There is no specific command') is True:
@@ -57,9 +58,9 @@ class Lookup:
                 print("\nPlease type in more than two words.\n")
 
     @staticmethod
-    def lookup(self, prompt, api_key):
+    def lookup(prompt, api_key):
         try:
-            if helpers.validate_api_key(self, api_key) is False:
+            if helpers.validate_api_key(api_key) is False:
                 print("Error 1009: API key is invalid or missing")
                 exit()
 
@@ -103,27 +104,28 @@ class Lookup:
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             Write SQL Queries
         """)
-        if helpers.validate_api_key(self, api_key) is False:
+        if helpers.validate_api_key(api_key) is False:
             print("Error 1009: API key is invalid or missing")
-        prompt = helpers.clear_input(self, input("SQL Query Prompt: "))
+        prompt = helpers.clear_input(input("SQL Query Prompt: "))
 
         if prompt == '':
-            prompt(conn, cursor, api_key)
+            self.prompt(conn, cursor, api_key, no_copy)
+            return
         if prompt == 'exit':
             print('bye...')
-            exit()
-        elif helpers.validate_input(self, prompt.strip()):
+            return
+        elif helpers.validate_input(prompt.strip()):
             word_list = prompt.strip().split()
             if len(word_list) >= 3:
-                response = self.sql_query(self, prompt, api_key)
+                response = self.sql_query(prompt, api_key)
                 if response is not None:
                     if not no_copy:
                         if platform.system() == "Linux":
-                            helpers.copy_to_clipboard(self, response)
+                            helpers.copy_to_clipboard(response)
                         else:
                             pyperclip.copy(response)
 
-                    response_text = helpers.clear_input(self, response)
+                    response_text = helpers.clear_input(response)
 
                     if response_text.find('there is no query') is True and response_text.find(
                             'There is no specific query') is True:
@@ -136,9 +138,9 @@ class Lookup:
                 print("\nPlease type in more than two words.\n")
 
     @staticmethod
-    def sql_query(self, prompt, api_key):
+    def sql_query(prompt, api_key):
         try:
-            if helpers.validate_api_key(self, api_key) is False:
+            if helpers.validate_api_key(api_key) is False:
                 print("Error 1009: API key is invalid or missing")
                 exit()
 
@@ -180,25 +182,26 @@ class Lookup:
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             Get Colors Hex code
         """)
-        if helpers.validate_api_key(self, api_key) is False:
+        if helpers.validate_api_key(api_key) is False:
             print("Error 1009: API key is invalid or missing")
-        prompt = helpers.clear_input(self, input("Color Prompt: "))
+        prompt = helpers.clear_input(input("Color Prompt: "))
 
         if prompt == '':
-            prompt(conn, cursor, api_key)
+            self.prompt(conn, cursor, api_key, no_copy)
+            return
         if prompt == 'exit':
             print('bye...')
-            exit()
+            return
         else:
-            response = self.color_query(self, prompt, api_key)
+            response = self.color_query(prompt, api_key)
             if response is not None:
                 if not no_copy:
                     if platform.system() == "Linux":
-                        helpers.copy_to_clipboard(self, response)
+                        helpers.copy_to_clipboard(response)
                     else:
                         pyperclip.copy(response)
 
-                response = helpers.clear_input(self, response)
+                response = helpers.clear_input(response)
 
                 if response.find('there is no color') is True and response.find(
                         'There is no specific color') is True:
@@ -211,9 +214,9 @@ class Lookup:
                 print("\nPlease type in more than two words.\n")
 
     @staticmethod
-    def color_query(self, prompt, api_key):
+    def color_query(prompt, api_key):
         try:
-            if helpers.validate_api_key(self, api_key) is False:
+            if helpers.validate_api_key(api_key) is False:
                 print("Error 1009: API key is invalid or missing")
                 exit()
 
@@ -244,12 +247,12 @@ class Lookup:
             print(f"Error 1011: Unhandled exception occurred: {e}")
 
     @staticmethod
-    def port_lookup(self, api_key):
+    def port_lookup(api_key):
         try:
-            if helpers.validate_api_key(self, api_key) is False:
+            if helpers.validate_api_key(api_key) is False:
                 print("Error 1009: API key is invalid or missing")
                 exit()
-            prompt = helpers.clear_input(self, input("Port: "))
+            prompt = helpers.clear_input(input("Port: "))
             prompt = prompt
 
             client = OpenAI(
