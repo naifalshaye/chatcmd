@@ -57,16 +57,16 @@ class Helpers:
 
     @staticmethod
     def validate_api_key(api_key):
-        if api_key[0:3] != 'sk-':
+        if not api_key.startswith('sk-'):
             return False
         # if len(api_key) != 51:
         #     return False
-        if not re.match("^[a-zA-Z0-9-]+$", api_key):
+        if not re.match("^[a-zA-Z0-9-_]+$", api_key):
             return False
         return True
 
     @staticmethod
-    def get_line_number(self):
+    def get_line_number():
         frame = inspect.currentframe().f_back
         return frame.f_lineno
 
