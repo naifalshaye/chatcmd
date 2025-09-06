@@ -38,15 +38,6 @@ Options:
   -h, --help                        display this screen.
   -v, --version                     display ChatCMD version.
   -x, --library-info                display library information.
-  
-  # New Multi-Model Options:
-  -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
-  --list-models                     list all available AI models
-  --model-info <model>              show information about a specific model
-  --set-model-key <provider>        set API key for specific provider
-  --get-model-key <provider>        get API key for specific provider
-  --current-model                   show current model and provider
-  --performance-stats               show model performance statistics
 """
 
 from openai import OpenAI
