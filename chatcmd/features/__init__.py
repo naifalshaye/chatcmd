@@ -1,6 +1,4 @@
 import logging
-import uuid
-import datetime
 
 from fake_useragent import UserAgent
 import requests
