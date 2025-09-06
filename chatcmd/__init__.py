@@ -39,6 +39,21 @@ Options:
   -v, --version                     display ChatCMD version.
   -x, --library-info                display library information.
   
+  # Developer Tools:
+  --code-snippet <lang>             generate code snippet in specified language.
+  --regex-pattern                   generate regex pattern for description.
+  --format-json                     format and validate JSON string.
+  --base64-encode                   encode text to base64.
+  --base64-decode                   decode base64 text.
+  --git-command <operation>         generate git command for operation.
+  --docker-command <operation>      generate docker command for operation.
+  --file-hash <algorithm>           generate file hash (md5, sha1, sha256, sha512).
+  --generate-uuid <version>         generate UUID (1, 3, 4, 5).
+  --timestamp-convert <format>      convert timestamp (unix, iso, readable).
+  --qr-code                         generate QR code for text/URL.
+  --markdown-table                  generate markdown table.
+  --curl-command                    generate curl command for API testing.
+  
   # New Multi-Model Options:
   -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
   --list-models                     list all available AI models
@@ -151,9 +166,9 @@ class ChatCMD:
                 selected_model = self.args['--model']
             
             # Backward compatibility - get API key for OpenAI
-            api_key = api.get_api_key(self, self.conn, self.cursor)
+            api_key = api.get_api_key(self.conn, self.cursor)
             if api_key is None:
-                api_key = api.ask_for_api_key(self, self.conn, self.cursor)
+                api_key = api.ask_for_api_key(self.conn, self.cursor)
 
             if self.args['--lookup-cmd']:
                 if selected_model:
@@ -174,11 +189,11 @@ class ChatCMD:
             elif self.args['--lookup-http-code']:
                 features.lookup_http_code()
             elif self.args['--port-lookup']:
-                lookup.port_lookup(self, api_key)
+                lookup.port_lookup(api_key)
             elif self.args['--set-key']:
-                api.ask_for_api_key(self, self.conn, self.cursor)
+                api.ask_for_api_key(self.conn, self.cursor)
             elif self.args['--get-key']:
-                api.output_api_key(self, self.conn, self.cursor)
+                api.output_api_key(self.conn, self.cursor)
             elif self.args['--get-cmd']:
                 cmd.get_cmd(self.cursor)
             elif self.args['--get-last']:
@@ -190,16 +205,77 @@ class ChatCMD:
             elif self.args['--delete-last-cmd']:
                 cmd.delete_last_num_cmd(self.conn, self.cursor, self.args['--delete-last-cmd'])
             elif self.args['--clear-history']:
-                cmd.clear_history(self, self.cursor)
+                cmd.clear_history(self.conn, self.cursor)
             elif self.args['--db-size']:
                 cmd.get_db_size(self.db_path)
             elif self.args['--library-info']:
-                helpers.library_info(self)
+                helpers.library_info()
             elif self.args['--no-copy']:
                 if selected_model:
                     self.enhanced_lookup.prompt(True, selected_model)
                 else:
                     self.enhanced_lookup.prompt(True)
+            elif self.args['--code-snippet']:
+                language = self.args['--code-snippet']
+                description = input("Code description: ")
+                features.generate_code_snippet(language, description)
+            elif self.args['--regex-pattern']:
+                description = input("Regex description: ")
+                features.generate_regex_pattern(description)
+            elif self.args['--format-json']:
+                json_string = input("JSON string: ")
+                features.format_json(json_string)
+            elif self.args['--base64-encode']:
+                text = input("Text to encode: ")
+                features.base64_encode_decode(text, 'encode')
+            elif self.args['--base64-decode']:
+                text = input("Base64 text to decode: ")
+                features.base64_encode_decode(text, 'decode')
+            elif self.args['--git-command']:
+                operation = self.args['--git-command']
+                features.generate_git_commands(operation)
+            elif self.args['--docker-command']:
+                operation = self.args['--docker-command']
+                features.generate_docker_commands(operation)
+            elif self.args['--file-hash']:
+                algorithm = self.args['--file-hash']
+                text = input("Text to hash: ")
+                features.generate_file_hash(text, algorithm)
+            elif self.args['--generate-uuid']:
+                version = int(self.args['--generate-uuid'])
+                features.generate_uuid(version)
+            elif self.args['--timestamp-convert']:
+                format_type = self.args['--timestamp-convert']
+                timestamp = input("Timestamp to convert: ")
+                features.convert_timestamp(timestamp, format_type)
+            elif self.args['--qr-code']:
+                text = input("Text/URL for QR code: ")
+                features.generate_qr_code(text)
+            elif self.args['--markdown-table']:
+                print("Enter table headers (comma-separated):")
+                headers = input().split(',')
+                print("Enter number of rows:")
+                num_rows = int(input())
+                rows = []
+                for i in range(num_rows):
+                    print(f"Enter row {i+1} (comma-separated):")
+                    row = input().split(',')
+                    rows.append(row)
+                features.generate_markdown_table(headers, rows)
+            elif self.args['--curl-command']:
+                url = input("API URL: ")
+                method = input("HTTP method (GET/POST/PUT/DELETE) [GET]: ") or "GET"
+                print("Enter headers (key:value format, one per line, empty line to finish):")
+                headers = {}
+                while True:
+                    header = input()
+                    if not header:
+                        break
+                    if ':' in header:
+                        key, value = header.split(':', 1)
+                        headers[key.strip()] = value.strip()
+                data = input("Request body data (optional): ") or None
+                features.generate_curl_command(url, method, headers, data)
             elif self.args['--version']:
                 print('ChatCMD ' + importlib.metadata.version('chatcmd'))
             else:

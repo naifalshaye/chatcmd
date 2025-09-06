@@ -7,7 +7,7 @@ helpers = Helpers()
 class API:
 
     @staticmethod
-    def get_api_key(self, conn, cursor):
+    def get_api_key(conn, cursor):
         try:
             cursor.execute('CREATE TABLE IF NOT EXISTS config (id INTEGER PRIMARY KEY, api_key TEXT)')
             conn.commit()
@@ -18,7 +18,7 @@ class API:
             cursor.execute("SELECT api_key FROM config WHERE id = 1")
             api_key = cursor.fetchone()
             if api_key[0] is not None:
-                if helpers.validate_api_key(self, api_key[0]):
+                if helpers.validate_api_key(api_key[0]):
                     return api_key[0]
             return None
         except sqlite3.Error as e:
@@ -26,9 +26,9 @@ class API:
             return None
 
     @staticmethod
-    def output_api_key(self, conn, cursor):
+    def output_api_key(conn, cursor):
         try:
-            api_key = api.get_api_key(self, conn, cursor)
+            api_key = api.get_api_key(conn, cursor)
             print("\n ChatGPT API key: " + api_key + "\n")
         except Exception as e:
             print(f"Error 1004: Failed to output API key: {e}")
@@ -44,11 +44,11 @@ class API:
             print(f"Error 1005: Failed to save API key to database: {e}")
 
     @staticmethod
-    def ask_for_api_key(self, conn, cursor):
+    def ask_for_api_key(conn, cursor):
         try:
             while True:
                 api_key = input("\nEnter a valid ChatGPT API key: ")
-                validate = helpers.validate_api_key(self, api_key)
+                validate = helpers.validate_api_key(api_key)
                 if validate:
                     if api.save_api_key(conn, cursor, api_key):
                         print("\nChatGPT API Key updated successfully.\n")

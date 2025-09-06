@@ -19,7 +19,7 @@ class Helpers:
             print("Consider upgrading using: pip3 install --upgrade chatcmd")
 
     @staticmethod
-    def library_info(self):
+    def library_info():
         print(
             "----------------------------------------------------------------\n"
             "  Library Name: ChatCMD\n"
@@ -36,19 +36,19 @@ class Helpers:
         )
 
     @staticmethod
-    def copy_to_clipboard(self, text):
+    def copy_to_clipboard(text):
         try:
             subprocess.run(['/usr/bin/xclip', '-selection', 'clipboard'], input=text, encoding='utf-8', check=True)
         except subprocess.CalledProcessError as e:
             print(f"Failed to copy command to clipboard. Find how to avoid this error in the documentation.")
 
     @staticmethod
-    def clear_input(self, input):
+    def clear_input(input):
         input = input.strip()
         return input
 
     @staticmethod
-    def validate_input(self, prompt):
+    def validate_input(prompt):
         pattern = r'^[A-Za-z0-9 _\-@$\.]+$'
         if re.match(pattern, str(prompt)):
             return True
@@ -56,7 +56,7 @@ class Helpers:
         return False
 
     @staticmethod
-    def validate_api_key(self, api_key):
+    def validate_api_key(api_key):
         if api_key[0:3] != 'sk-':
             return False
         # if len(api_key) != 51:
