@@ -4,41 +4,71 @@
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/chatcmd.svg?style=flat-square)](https://pypi.org/project/chatcmd)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://en.wikipedia.org/wiki/MIT_License)
 
-#### **ChatCMD** is an open source AI-driven CLI-based command lookup using ChatGPT to lookup relevant CLI commands based on user input and other generating and lookup features. ####
+#### **ChatCMD** is an open source AI-driven CLI-based command lookup using multiple AI models to lookup relevant CLI commands based on user input and other generating and lookup features. ####
 
 #### Boost Your Productivity, ***Say Goodbye*** to Manual Searches ####
 
 ## Features ##
-- CLI-based command lookup using ChatGPT.
-- Generate SQL query using ChatGPT.
-- Generate a random user-agent.
-- Generate a random password.
-- Get your public IP address.
-- Get a color Hex code by describing the color.
-- Lookup HTTP Code.
+
+### Core Features
+- CLI-based command lookup using multiple AI models (OpenAI, Anthropic, Google, Cohere, Ollama)
+- Generate SQL query using AI
+- Generate a random user-agent
+- Generate a random password
+- Get your public IP address
+- Get a color Hex code by describing the color
+- Lookup HTTP Code
 - Lookup any port number
-- Auto copy command to clipboard.
-- Disable copy feature.
-- Store Data in Sqlite Database.
-- Add or update ChatGPT API key.
-- Validate ChatGPT API key.
-- Display ChatGPT API Key.
-- Display last command.
-- Display last {number} of commands.
-- Delete last Command.
-- Delete last {number} of commands.
-- Display the total number of commands.
-- Clear all history records.
-- Display the database file size.
-- Clear and validate user inputs.
-- Clear and validate lookup results to ensure only valid CLI commands are returned.
-- Error handling
-- Display library information.
+- Auto copy command to clipboard
+- Disable copy feature
+- Store Data in Sqlite Database
+- Add or update API keys for multiple providers
+- Validate API keys
+- Display API Keys
+- Display last command
+- Display last {number} of commands
+- Delete last Command
+- Delete last {number} of commands
+- Display the total number of commands
+- Clear all history records
+- Display the database file size
+- Clear and validate user inputs
+- Clear and validate lookup results to ensure only valid CLI commands are returned
+- Enhanced error handling with human-readable messages
+- Display library information
+
+### Developer Tools
+- **Code Snippet Generation** - Generate code snippets in various programming languages
+- **Regex Pattern Generator** - Create regex patterns for common use cases
+- **JSON Formatter** - Format and validate JSON strings
+- **Base64 Encoder/Decoder** - Encode or decode base64 strings
+- **Git Command Helper** - Generate common git commands
+- **Docker Command Generator** - Generate common Docker commands
+- **File Hash Generator** - Generate file hashes using various algorithms
+- **UUID Generator** - Generate UUIDs in different formats
+- **Timestamp Converter** - Convert between different timestamp formats
+- **QR Code Generator** - Generate QR codes for text/URLs
+- **Markdown Table Generator** - Generate markdown tables
+- **cURL Command Generator** - Generate curl commands for API testing
+
+### Multi-Model AI Support
+- **OpenAI Models**: GPT-3.5 Turbo, GPT-4, GPT-4 Turbo
+- **Anthropic Claude Models**: Claude 3 Haiku, Sonnet, Opus
+- **Google Models**: Gemini Pro
+- **Cohere Models**: Command, Command Light
+- **Local Models (Ollama)**: Llama 2, Code Llama, Mistral
 
 ## Requirements ##
     Python >= 3.8.9
-    OpenAI account and valid API key
-    https://platform.openai.com/signup
+    AI provider account and valid API key (OpenAI, Anthropic, Google, Cohere, or Ollama for local models)
+    
+    Get API keys:
+    - OpenAI: https://platform.openai.com/signup
+    - Anthropic: https://console.anthropic.com/
+    - Google: https://makersuite.google.com/app/apikey
+    - Cohere: https://dashboard.cohere.ai/
+    - Ollama: https://ollama.ai/ (for local models)
+
 ## Installation ##
     pip3 install chatcmd
     
@@ -66,6 +96,44 @@ If pip not installed:
 If pip not installed:
 
     python3 -m pip uninstall chatcmd
+
+## Quick Start ##
+
+### 1. Set Up API Keys
+```bash
+# Set OpenAI API key
+chatcmd --set-model-key openai
+
+# Set Anthropic API key
+chatcmd --set-model-key anthropic
+
+# Set Google API key
+chatcmd --set-model-key google
+
+# Set Cohere API key
+chatcmd --set-model-key cohere
+```
+
+### 2. List Available Models
+```bash
+chatcmd --list-models
+```
+
+### 3. Basic Usage
+```bash
+# Use default model (GPT-3.5 Turbo)
+chatcmd --lookup-cmd
+
+# Use specific model
+chatcmd --model gpt-4 --lookup-cmd
+
+# Generate code snippet
+chatcmd --code-snippet python
+
+# Generate git command
+chatcmd --git-command commit
+```
+
 ## Usage ##
 
 ```
@@ -95,8 +163,112 @@ Options:
   -h, --help                        display this screen.
   -v, --version                     display ChatCMD version.
   -x, --library-info                display library information.
+  
+  # Developer Tools:
+  --code-snippet <lang>             generate code snippet in specified language.
+  --regex-pattern                   generate regex pattern for description.
+  --format-json                     format and validate JSON string.
+  --base64-encode                   encode text to base64.
+  --base64-decode                   decode base64 text.
+  --git-command <operation>         generate git command for operation.
+  --docker-command <operation>      generate docker command for operation.
+  --file-hash <algorithm>           generate file hash (md5, sha1, sha256, sha512).
+  --generate-uuid <version>         generate UUID (1, 3, 4, 5).
+  --timestamp-convert <format>      convert timestamp (unix, iso, readable).
+  --qr-code                         generate QR code for text/URL.
+  --markdown-table                  generate markdown table.
+  --curl-command                    generate curl command for API testing.
+  
+  # Multi-Model Options:
+  -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
+  --list-models                     list all available AI models
+  --model-info <model>              show information about a specific model
+  --set-model-key <provider>        set API key for specific provider
+  --get-model-key <provider>        get API key for specific provider
+  --current-model                   show current model and provider
+  --performance-stats               show model performance statistics
 
 ```
+
+## Usage Examples ##
+
+### Basic CLI Command Lookup
+```bash
+# Use default model
+chatcmd --lookup-cmd "find all files larger than 100MB"
+
+# Use specific model
+chatcmd --model gpt-4 --lookup-cmd "create a backup of my database"
+```
+
+### Developer Tools
+```bash
+# Generate code snippet
+chatcmd --code-snippet python "create a class for handling database connections"
+
+# Generate regex pattern
+chatcmd --regex-pattern "email validation"
+
+# Format JSON
+echo '{"name":"John","age":30}' | chatcmd --format-json
+
+# Generate git command
+chatcmd --git-command "create new branch and switch to it"
+
+# Generate Docker command
+chatcmd --docker-command "run container with port mapping"
+
+# Generate cURL command
+chatcmd --curl-command
+```
+
+### Multi-Model Usage
+```bash
+# List available models
+chatcmd --list-models
+
+# Use Claude 3 Sonnet
+chatcmd --model claude-3-sonnet --lookup-cmd
+
+# Use local Llama 2 (requires Ollama)
+chatcmd --model llama2 --lookup-cmd
+
+# Check current model
+chatcmd --current-model
+
+# View performance statistics
+chatcmd --performance-stats
+```
+
+### Local Models Setup (Ollama)
+```bash
+# Install Ollama
+# macOS: brew install ollama
+# Linux: curl -fsSL https://ollama.ai/install.sh | sh
+
+# Pull models
+ollama pull llama2
+ollama pull codellama
+ollama pull mistral
+
+# Use local models
+chatcmd --model llama2 --lookup-cmd
+chatcmd --model codellama --lookup-cmd
+```
+
+## Model Comparison ##
+
+| Model | Speed | Quality | Cost | Best For |
+|-------|-------|---------|------|----------|
+| gpt-3.5-turbo | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | General use, fast responses |
+| gpt-4 | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ | Complex commands, best quality |
+| claude-3-haiku | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | Fast, good quality |
+| claude-3-sonnet | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ | Balanced performance |
+| claude-3-opus | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ | Best quality, complex tasks |
+| gemini-pro | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ | Google ecosystem |
+| command | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | Cost-effective |
+| llama2 (local) | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Privacy, no API costs |
+| codellama (local) | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Coding tasks, privacy |
 
 ## Error Codes ##
 Include an exception message for each error if occurs.
