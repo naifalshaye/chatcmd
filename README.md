@@ -37,6 +37,29 @@
 - Enhanced error handling with human-readable messages
 - Display library information
 
+#### Core Features Implementation Types
+
+| Feature | Implementation | AI/API Usage | Description |
+|---------|---------------|--------------|-------------|
+| **CLI Command Lookup** | 🟢 AI-Powered | ✅ AI Models | Uses OpenAI, Anthropic, Google, Cohere, Ollama |
+| **SQL Query Generation** | 🟢 AI-Powered | ✅ AI Models | AI generates SQL based on natural language |
+| **Random User-Agent** | 🔴 Static Code | ❌ No AI | Uses predefined user-agent strings |
+| **Random Password** | 🔴 Static Code | ❌ No AI | Uses Python's random library |
+| **Public IP Address** | 🟡 External API | ⚠️ External Service | Uses external IP service (not AI) |
+| **Color Hex Code** | 🔴 Static Code | ❌ No AI | Uses predefined color database |
+| **HTTP Code Lookup** | 🔴 Static Code | ❌ No AI | Uses predefined HTTP status codes |
+| **Port Lookup** | 🔴 Static Code | ❌ No AI | Uses predefined port database |
+| **Database Operations** | 🔴 Static Code | ❌ No AI | Uses SQLite for local storage |
+| **API Key Management** | 🔴 Static Code | ❌ No AI | Local storage and validation |
+| **Command History** | 🔴 Static Code | ❌ No AI | Local database operations |
+| **Clipboard Operations** | 🔴 Static Code | ❌ No AI | Uses pyperclip library |
+| **Input Validation** | 🔴 Static Code | ❌ No AI | Regex and string validation |
+
+**Summary:**
+- **🟢 AI-Powered (2 features)**: CLI lookup and SQL generation
+- **🔴 Static Code (10 features)**: Most core features work offline
+- **🟡 External API (1 feature)**: IP address lookup only
+
 ### Developer Tools
 - **Code Snippet Generation** - Generate code snippets in various programming languages
 - **Regex Pattern Generator** - Create regex patterns for common use cases
@@ -50,6 +73,30 @@
 - **QR Code Generator** - Generate QR codes for text/URLs
 - **Markdown Table Generator** - Generate markdown tables
 - **cURL Command Generator** - Generate curl commands for API testing
+
+#### Developer Tools Implementation Types
+
+| Feature | Implementation | AI/API Usage | Benefits |
+|---------|---------------|--------------|----------|
+| **Code Snippet Generation** | 🔴 Static Code | ❌ No AI | Fast, offline, no API costs |
+| **Regex Pattern Generator** | 🔴 Static Code | ❌ No AI | Instant response, predefined patterns |
+| **JSON Formatter** | 🔴 Static Code | ❌ No AI | Reliable, uses Python's json library |
+| **Base64 Encoder/Decoder** | 🔴 Static Code | ❌ No AI | Fast, built-in Python library |
+| **Git Command Helper** | 🔴 Static Code | ❌ No AI | Quick reference, no learning curve |
+| **Docker Command Generator** | 🔴 Static Code | ❌ No AI | Instant commands, no API calls |
+| **File Hash Generator** | 🔴 Static Code | ❌ No AI | Secure, uses hashlib library |
+| **UUID Generator** | 🔴 Static Code | ❌ No AI | Fast, uses Python's uuid library |
+| **Timestamp Converter** | 🔴 Static Code | ❌ No AI | Reliable, uses datetime library |
+| **QR Code Generator** | 🟡 External API | ⚠️ External Service | Uses api.qrserver.com (not AI) |
+| **Markdown Table Generator** | 🔴 Static Code | ❌ No AI | Fast formatting, no dependencies |
+| **cURL Command Generator** | 🔴 Static Code | ❌ No AI | Quick API testing commands |
+
+**Key Benefits:**
+- **92% Static Code**: Most tools work offline without API calls
+- **No AI Costs**: Developer tools don't consume AI API credits
+- **Fast Response**: Instant results without network latency
+- **Reliable**: No dependency on external AI services
+- **Offline Capable**: Works without internet (except QR codes)
 
 ### Multi-Model AI Support
 - **OpenAI Models**: GPT-3.5 Turbo, GPT-4, GPT-4 Turbo
