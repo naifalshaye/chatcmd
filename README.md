@@ -331,22 +331,6 @@ To resolve this, you can try installing Xclip using the following command: "sudo
 Additionally, you need to export the DISPLAY variable by running: "export DISPLAY=:0.0".
 
 To avoid the error message, you can use the "-no-copy" option when looking up a command, as it disables the copy feature.
-
-## Screenshots ##
-### Help screen: ###
-<img src="https://github.com/naifalshaye/chatcmd/raw/master/chatcmd/images/help.png" alt="Help Screen" style="width:550px;"/>
-
-### Library Info: ###
-<img src="https://github.com/naifalshaye/chatcmd/raw/master/chatcmd/images/library-info.png" alt="Lookup Screen" style="width:500px;"/>
-
-### Command Lookup screen: ###
-<img src="https://github.com/naifalshaye/chatcmd/raw/master/chatcmd/images/lookup.png" alt="Lookup Screen" style="width:500px;"/>
-
-### Tested on: ###
- - Ubuntu 22.04
- - Windows Server 2022
- - macOS Ventura 13.0
-
 ## Support ##
 [Issues](https://github.com/naifalshaye/chatcmd/issues)
 

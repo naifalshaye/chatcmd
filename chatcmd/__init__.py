@@ -8,7 +8,7 @@
     ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
      ######  ##     ## ##     ##    ##     ######  ##     ## ########
    --------------------------------------------------------------------
-        Open Source AI-driven CLI command lookup using multiple AI models
+Open Source AI-driven CLI command lookup, SQL Generator and other tools using multiple AI models
           Boost Your Productivity, Say Goodbye to Manual Searches
    --------------------------------------------------------------------
                Developed By: Naif Alshaye | https://naif.io
