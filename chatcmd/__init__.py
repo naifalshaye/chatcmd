@@ -8,7 +8,7 @@
     ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
      ######  ##     ## ##     ##    ##     ######  ##     ## ########
    --------------------------------------------------------------------
-           Open Source AI-driven CLI command lookup using ChatGPT
+        Open Source AI-driven CLI command lookup using multiple AI models
           Boost Your Productivity, Say Goodbye to Manual Searches
    --------------------------------------------------------------------
                Developed By: Naif Alshaye | https://naif.io
@@ -17,16 +17,11 @@ Usage:
     chatcmd [options]
 
 Options:
-  -l, --lookup-cmd                  looking up a CLI command.
-  -q, --sql-query                   generate SQL query.
-  -u, --random-useragent            generate a random user-agent
-  -i, --get-ip                      get your public IP address.
-  -p, --random-password             generate a random password.
-  -c, --color-code                  get a color Hex code.
-  -a, --lookup-http-code            lookup HTTP Code by code number.
-  -z, --port-lookup                 lookup any port number.
-  -k, --set-key                     set or update ChatGPT API key.
-  -o, --get-key                     display ChatGPT API key.
+  # Core AI Features:
+  -c, --cmd                         looking up a CLI command.
+  -q, --sql                         generate SQL query.
+  
+  # Library & Information:
   -g, --get-cmd                     display the last command.
   -G, --get-last=<value>            display the last [number] of commands.
   -d, --delete-cmd                  delete the last command.
@@ -40,19 +35,24 @@ Options:
   -x, --library-info                display library information.
   
   # Developer Tools:
-  --code-snippet <lang>             generate code snippet in specified language.
+  --random-useragent                generate a random user-agent
+  --get-ip                          get your public IP address.
+  --random-password                 generate a random password.
+  --color-code                      get a color Hex code.
+  --lookup-http-code                lookup HTTP Code by code number.
+  --port-lookup                     lookup any port number.
   --regex-pattern                   generate regex pattern for description.
-  --format-json                     format and validate JSON string.
   --base64-encode                   encode text to base64.
   --base64-decode                   decode base64 text.
   --git-command <operation>         generate git command for operation.
   --docker-command <operation>      generate docker command for operation.
-  --file-hash <algorithm>           generate file hash (md5, sha1, sha256, sha512).
   --generate-uuid <version>         generate UUID (1, 3, 4, 5).
   --timestamp-convert <format>      convert timestamp (unix, iso, readable).
   --qr-code                         generate QR code for text/URL.
-  --markdown-table                  generate markdown table.
-  --curl-command                    generate curl command for API testing.
+  
+  # Legacy API Key Management:
+  -k, --set-key                     set or update API key (legacy OpenAI only).
+  -o, --get-key                     display API key (legacy OpenAI only).
   
   # Multi-Model Options:
   -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
@@ -64,12 +64,12 @@ Options:
   --performance-stats               show model performance statistics
 """
 
-from openai import OpenAI
 from docopt import docopt
 from chatcmd.helpers import Helpers
 from chatcmd.lookup import Lookup
 from chatcmd.lookup.enhanced_lookup import EnhancedLookup
 from chatcmd.api import API
+from chatcmd.api.enhanced_api import EnhancedAPI
 from chatcmd.commands import CMD
 from chatcmd.features import Features
 from chatcmd.database.schema_manager import SchemaManager
@@ -91,13 +91,12 @@ class ChatCMD:
         self.args = docopt(__doc__)
         self.no_copy = False
 
-        self.BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-        self.db_path = os.path.join(self.BASE_DIR, "chatcmd/db.sqlite")
-        
-        # Initialize enhanced database manager
-        self.db_manager = SchemaManager(self.db_path)
+        # Initialize enhanced database manager with secure cross-platform path
+        self.db_manager = SchemaManager()
+        self.db_path = self.db_manager.db_path
         self.enhanced_lookup = EnhancedLookup(self.db_manager)
         self.model_config = ModelConfig()
+        self.enhanced_api = EnhancedAPI(self.db_manager)
         
         # Keep backward compatibility
         self.conn = self.db_manager.conn
@@ -165,19 +164,16 @@ class ChatCMD:
             if self.args['--model']:
                 selected_model = self.args['--model']
             
-            # Backward compatibility - get API key for OpenAI
-            api_key = api.get_api_key(self.conn, self.cursor)
-            if api_key is None:
-                api_key = api.ask_for_api_key(self.conn, self.cursor)
-
-            if self.args['--lookup-cmd']:
+            # Check if any AI provider is configured
+            if self.args['--cmd'] or self.args['--sql']:
+                if not self._is_any_provider_configured():
+                    self._setup_initial_provider()
+                
                 if selected_model:
                     self.enhanced_lookup.prompt(False, selected_model)
                 else:
                     # Use enhanced lookup for better multi-model support
                     self.enhanced_lookup.prompt(False)
-            elif self.args['--sql-query']:
-                lookup.prompt_sql(self.conn, self.cursor, api_key, False)
             elif self.args['--get-ip']:
                 features.get_public_ip_address()
             elif self.args['--random-useragent']:
@@ -215,16 +211,9 @@ class ChatCMD:
                     self.enhanced_lookup.prompt(True, selected_model)
                 else:
                     self.enhanced_lookup.prompt(True)
-            elif self.args['--code-snippet']:
-                language = self.args['--code-snippet']
-                description = input("Code description: ")
-                features.generate_code_snippet(language, description)
             elif self.args['--regex-pattern']:
                 description = input("Regex description: ")
                 features.generate_regex_pattern(description)
-            elif self.args['--format-json']:
-                json_string = input("JSON string: ")
-                features.format_json(json_string)
             elif self.args['--base64-encode']:
                 text = input("Text to encode: ")
                 features.base64_encode_decode(text, 'encode')
@@ -237,10 +226,6 @@ class ChatCMD:
             elif self.args['--docker-command']:
                 operation = self.args['--docker-command']
                 features.generate_docker_commands(operation)
-            elif self.args['--file-hash']:
-                algorithm = self.args['--file-hash']
-                text = input("Text to hash: ")
-                features.generate_file_hash(text, algorithm)
             elif self.args['--generate-uuid']:
                 version = int(self.args['--generate-uuid'])
                 features.generate_uuid(version)
@@ -251,31 +236,6 @@ class ChatCMD:
             elif self.args['--qr-code']:
                 text = input("Text/URL for QR code: ")
                 features.generate_qr_code(text)
-            elif self.args['--markdown-table']:
-                print("Enter table headers (comma-separated):")
-                headers = input().split(',')
-                print("Enter number of rows:")
-                num_rows = int(input())
-                rows = []
-                for i in range(num_rows):
-                    print(f"Enter row {i+1} (comma-separated):")
-                    row = input().split(',')
-                    rows.append(row)
-                features.generate_markdown_table(headers, rows)
-            elif self.args['--curl-command']:
-                url = input("API URL: ")
-                method = input("HTTP method (GET/POST/PUT/DELETE) [GET]: ") or "GET"
-                print("Enter headers (key:value format, one per line, empty line to finish):")
-                headers = {}
-                while True:
-                    header = input()
-                    if not header:
-                        break
-                    if ':' in header:
-                        key, value = header.split(':', 1)
-                        headers[key.strip()] = value.strip()
-                data = input("Request body data (optional): ") or None
-                features.generate_curl_command(url, method, headers, data)
             elif self.args['--version']:
                 print('ChatCMD ' + importlib.metadata.version('chatcmd'))
             else:
@@ -288,11 +248,62 @@ class ChatCMD:
         except Exception as e:
             print(f"Error 1001: {e}")
     
+    def _is_any_provider_configured(self) -> bool:
+        """Check if any AI provider has an API key configured"""
+        providers = ['openai', 'anthropic', 'google', 'cohere', 'ollama']
+        for provider in providers:
+            if self.enhanced_api.get_provider_api_key(provider):
+                return True
+        return False
+    
+    def _setup_initial_provider(self):
+        """Guide user through initial provider setup"""
+        print("""
+        
+         ######  ##     ##    ###    ########  ######  ##     ## ########
+        ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
+        ##       ##     ##  ##   ##     ##    ##       #### #### ##     ##
+        ##       ######### ##     ##    ##    ##       ## ### ## ##     ##
+        ##       ##     ## #########    ##    ##       ##     ## ##     ##
+        ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
+         ######  ##     ## ##     ##    ##     ######  ##     ## ########
+                        Welcome to ChatCMD Setup
+        """)
+        
+        print("No AI provider configured yet. Let's set up your first provider!")
+        print("\nAvailable AI Providers:")
+        print("1. OpenAI (GPT-3.5, GPT-4)")
+        print("2. Anthropic (Claude 3)")
+        print("3. Google (Gemini Pro)")
+        print("4. Cohere (Command)")
+        print("5. Ollama (Local models)")
+        
+        while True:
+            try:
+                choice = input("\nSelect provider (1-5): ").strip()
+                provider_map = {
+                    '1': 'openai',
+                    '2': 'anthropic', 
+                    '3': 'google',
+                    '4': 'cohere',
+                    '5': 'ollama'
+                }
+                
+                if choice in provider_map:
+                    provider = provider_map[choice]
+                    self._set_provider_api_key(provider)
+                    break
+                else:
+                    print("Invalid choice. Please select 1-5.")
+            except KeyboardInterrupt:
+                print("\nSetup cancelled.")
+                exit(0)
+    
     def _set_provider_api_key(self, provider):
         """Set API key for a specific provider"""
         try:
             api_key = input(f"\nEnter API key for {provider}: ")
-            if self.db_manager.add_provider(provider, api_key):
+            if self.enhanced_api.set_provider_api_key(provider, api_key):
                 print(f"\nAPI key for {provider} saved successfully.")
             else:
                 print(f"\nFailed to save API key for {provider}.")
@@ -302,10 +313,10 @@ class ChatCMD:
     def _get_provider_api_key(self, provider):
         """Get API key for a specific provider"""
         try:
-            provider_info = self.db_manager.get_provider(provider)
-            if provider_info and provider_info['api_key']:
+            api_key = self.enhanced_api.get_provider_api_key(provider)
+            if api_key:
                 # Show only first 8 characters for security
-                masked_key = provider_info['api_key'][:8] + "..." + provider_info['api_key'][-4:]
+                masked_key = api_key[:8] + "..." + api_key[-4:] if len(api_key) > 12 else "***masked***"
                 print(f"\n{provider} API key: {masked_key}")
             else:
                 print(f"\nNo API key found for {provider}")

@@ -6,6 +6,7 @@ Handles Claude model interactions for CLI command generation
 from typing import Optional
 import anthropic
 from .base import BaseAIProvider
+from chatcmd.config.model_config import ModelConfig
 
 
 class AnthropicProvider(BaseAIProvider):
@@ -15,6 +16,7 @@ class AnthropicProvider(BaseAIProvider):
         super().__init__(api_key, **kwargs)
         self.model_name = model_name
         self.client = anthropic.Anthropic(api_key=api_key)
+        self.model_config = ModelConfig()
     
     def generate_command(self, prompt: str) -> Optional[str]:
         """
@@ -27,9 +29,10 @@ class AnthropicProvider(BaseAIProvider):
             Clean CLI command string or None if generation fails
         """
         try:
-            # Use optimized prompt for CLI command generation
-            system_prompt = "You are a CLI command expert. Generate only the command needed to accomplish the task. Return only the command, no explanations, no markdown, no code blocks."
-            user_prompt = f"Command for: {prompt}"
+            # Use model-specific prompt template
+            template = self.model_config.get_model_prompt_template(self.model_name)
+            user_prompt = template.format(prompt=prompt)
+            system_prompt = "You are a CLI command expert. Return only the command, no explanations, no markdown, no code blocks."
             
             response = self.client.messages.create(
                 model=self.model_name,
@@ -66,13 +69,8 @@ class AnthropicProvider(BaseAIProvider):
             True if API key is valid, False otherwise
         """
         try:
-            # Test the API key with a simple request
-            response = self.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=1,
-                messages=[{"role": "user", "content": "test"}]
-            )
-            return True
+            # Basic format check to avoid network dependency here
+            return bool(self.api_key and len(self.api_key) > 20)
         except Exception:
             return False
     

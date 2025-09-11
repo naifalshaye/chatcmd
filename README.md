@@ -61,38 +61,28 @@
 - **🟡 External API (1 feature)**: IP address lookup only
 
 ### Developer Tools
-- **Code Snippet Generation** - Generate code snippets in various programming languages
 - **Regex Pattern Generator** - Create regex patterns for common use cases
-- **JSON Formatter** - Format and validate JSON strings
 - **Base64 Encoder/Decoder** - Encode or decode base64 strings
 - **Git Command Helper** - Generate common git commands
 - **Docker Command Generator** - Generate common Docker commands
-- **File Hash Generator** - Generate file hashes using various algorithms
 - **UUID Generator** - Generate UUIDs in different formats
 - **Timestamp Converter** - Convert between different timestamp formats
 - **QR Code Generator** - Generate QR codes for text/URLs
-- **Markdown Table Generator** - Generate markdown tables
-- **cURL Command Generator** - Generate curl commands for API testing
 
 #### Developer Tools Implementation Types
 
 | Feature | Implementation | AI/API Usage | Benefits |
 |---------|---------------|--------------|----------|
-| **Code Snippet Generation** | 🔴 Static Code | ❌ No AI | Fast, offline, no API costs |
 | **Regex Pattern Generator** | 🔴 Static Code | ❌ No AI | Instant response, predefined patterns |
-| **JSON Formatter** | 🔴 Static Code | ❌ No AI | Reliable, uses Python's json library |
 | **Base64 Encoder/Decoder** | 🔴 Static Code | ❌ No AI | Fast, built-in Python library |
 | **Git Command Helper** | 🔴 Static Code | ❌ No AI | Quick reference, no learning curve |
 | **Docker Command Generator** | 🔴 Static Code | ❌ No AI | Instant commands, no API calls |
-| **File Hash Generator** | 🔴 Static Code | ❌ No AI | Secure, uses hashlib library |
 | **UUID Generator** | 🔴 Static Code | ❌ No AI | Fast, uses Python's uuid library |
 | **Timestamp Converter** | 🔴 Static Code | ❌ No AI | Reliable, uses datetime library |
 | **QR Code Generator** | 🟡 External API | ⚠️ External Service | Uses api.qrserver.com (not AI) |
-| **Markdown Table Generator** | 🔴 Static Code | ❌ No AI | Fast formatting, no dependencies |
-| **cURL Command Generator** | 🔴 Static Code | ❌ No AI | Quick API testing commands |
 
 **Key Benefits:**
-- **92% Static Code**: Most tools work offline without API calls
+- **86% Static Code**: Most tools work offline without API calls
 - **No AI Costs**: Developer tools don't consume AI API credits
 - **Fast Response**: Instant results without network latency
 - **Reliable**: No dependency on external AI services
@@ -169,13 +159,10 @@ chatcmd --list-models
 ### 3. Basic Usage
 ```bash
 # Use default model (GPT-3.5 Turbo)
-chatcmd --lookup-cmd
+chatcmd --cmd
 
 # Use specific model
-chatcmd --model gpt-4 --lookup-cmd
-
-# Generate code snippet
-chatcmd --code-snippet python
+chatcmd --model gpt-4 --cmd
 
 # Generate git command
 chatcmd --git-command commit
@@ -189,14 +176,14 @@ Usage:
 chatcmd [options]
   
 Options:
-  -l, --lookup-cmd                  looking up a CLI command.
-  -q, --sql-query                   generate SQL query.
-  -u, --random-useragent            generate a random user-agent
-  -i, --get-ip                      get your public IP address.
-  -p, --random-password             generate a random password.
-  -c, --color-code                  get a color Hex code.
-  -a, --lookup-http-code            lookup HTTP Code by code number.
-  -z, --port-lookup                 lookup any port number.
+  -c, --cmd                         looking up a CLI command.
+  -q, --sql                         generate SQL query.
+  --random-useragent                generate a random user-agent
+  --get-ip                          get your public IP address.
+  --random-password                 generate a random password.
+  --color-code                      get a color Hex code.
+  --lookup-http-code                lookup HTTP Code by code number.
+  --port-lookup                     lookup any port number.
   -k, --set-key                     set or update ChatGPT API key.
   -o, --get-key                     display ChatGPT API key.
   -g, --get-cmd                     display the last command.
@@ -212,19 +199,14 @@ Options:
   -x, --library-info                display library information.
   
   # Developer Tools:
-  --code-snippet <lang>             generate code snippet in specified language.
   --regex-pattern                   generate regex pattern for description.
-  --format-json                     format and validate JSON string.
   --base64-encode                   encode text to base64.
   --base64-decode                   decode base64 text.
   --git-command <operation>         generate git command for operation.
   --docker-command <operation>      generate docker command for operation.
-  --file-hash <algorithm>           generate file hash (md5, sha1, sha256, sha512).
   --generate-uuid <version>         generate UUID (1, 3, 4, 5).
   --timestamp-convert <format>      convert timestamp (unix, iso, readable).
   --qr-code                         generate QR code for text/URL.
-  --markdown-table                  generate markdown table.
-  --curl-command                    generate curl command for API testing.
   
   # Multi-Model Options:
   -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
@@ -242,22 +224,16 @@ Options:
 ### Basic CLI Command Lookup
 ```bash
 # Use default model
-chatcmd --lookup-cmd "find all files larger than 100MB"
+chatcmd --cmd "find all files larger than 100MB"
 
 # Use specific model
-chatcmd --model gpt-4 --lookup-cmd "create a backup of my database"
+chatcmd --model gpt-4 --cmd "create a backup of my database"
 ```
 
 ### Developer Tools
 ```bash
-# Generate code snippet
-chatcmd --code-snippet python "create a class for handling database connections"
-
 # Generate regex pattern
 chatcmd --regex-pattern "email validation"
-
-# Format JSON
-echo '{"name":"John","age":30}' | chatcmd --format-json
 
 # Generate git command
 chatcmd --git-command "create new branch and switch to it"
@@ -265,8 +241,14 @@ chatcmd --git-command "create new branch and switch to it"
 # Generate Docker command
 chatcmd --docker-command "run container with port mapping"
 
-# Generate cURL command
-chatcmd --curl-command
+# Generate UUID
+chatcmd --generate-uuid 4
+
+# Convert timestamp
+chatcmd --timestamp-convert unix
+
+# Generate QR code
+chatcmd --qr-code
 ```
 
 ### Multi-Model Usage
@@ -275,10 +257,10 @@ chatcmd --curl-command
 chatcmd --list-models
 
 # Use Claude 3 Sonnet
-chatcmd --model claude-3-sonnet --lookup-cmd
+chatcmd --model claude-3-sonnet --cmd
 
 # Use local Llama 2 (requires Ollama)
-chatcmd --model llama2 --lookup-cmd
+chatcmd --model llama2 --cmd
 
 # Check current model
 chatcmd --current-model
@@ -299,8 +281,8 @@ ollama pull codellama
 ollama pull mistral
 
 # Use local models
-chatcmd --model llama2 --lookup-cmd
-chatcmd --model codellama --lookup-cmd
+chatcmd --model llama2 --cmd
+chatcmd --model codellama --cmd
 ```
 
 ## Model Comparison ##

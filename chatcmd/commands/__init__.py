@@ -8,11 +8,6 @@ class CMD:
     @staticmethod
     def add_cmd(conn, cursor, prompt, command, model_name=None, provider_name=None):
         try:
-            cursor.execute(
-                "CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY, "
-                "prompt TEXT, command TEXT, model_name TEXT, provider_name TEXT, created_at DATETIME)")
-            conn.commit()
-
             cursor.execute("INSERT INTO history (prompt,command,model_name,provider_name,created_at) VALUES(?,?,?,?,?)",
                            (prompt, command, model_name, provider_name, datetime.datetime.now()))
             conn.commit()

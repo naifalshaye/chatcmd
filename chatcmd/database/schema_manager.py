@@ -4,16 +4,33 @@ Handles database creation, migrations, and schema updates
 """
 
 import sqlite3
+import os
 from typing import Dict, List, Optional, Any
+from chatcmd.helpers.platform_utils import platform_utils
 
 
 class SchemaManager:
     """Manages database schema and migrations"""
     
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str = None):
+        # Use secure cross-platform path if not provided
+        if db_path is None:
+            db_path = platform_utils.get_db_path()
+        
+        # Migrate from legacy location if needed
+        legacy_paths = ['db.sqlite', 'chatcmd/db.sqlite']
+        for legacy_path in legacy_paths:
+            if os.path.exists(legacy_path) and not os.path.exists(db_path):
+                platform_utils.migrate_legacy_db(legacy_path, db_path)
+                break
+        
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)
         self.cursor = self.conn.cursor()
+        
+        # Set secure file permissions
+        platform_utils.set_secure_file_permissions(db_path)
+        
         self._initialize_schema()
     
     def _initialize_schema(self):

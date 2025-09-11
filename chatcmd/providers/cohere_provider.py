@@ -6,6 +6,7 @@ Handles Cohere model interactions for CLI command generation
 from typing import Optional
 import cohere
 from .base import BaseAIProvider
+from chatcmd.config.model_config import ModelConfig
 
 
 class CohereProvider(BaseAIProvider):
@@ -15,6 +16,7 @@ class CohereProvider(BaseAIProvider):
         super().__init__(api_key, **kwargs)
         self.model_name = model_name
         self.client = cohere.Client(api_key)
+        self.model_config = ModelConfig()
     
     def generate_command(self, prompt: str) -> Optional[str]:
         """
@@ -27,9 +29,10 @@ class CohereProvider(BaseAIProvider):
             Clean CLI command string or None if generation fails
         """
         try:
-            # Use optimized prompt for CLI command generation
-            system_prompt = "You are a CLI command expert. Generate only the command needed to accomplish the task. Return only the command, no explanations, no markdown, no code blocks."
-            user_prompt = f"Command for: {prompt}"
+            # Use model-specific prompt template
+            template = self.model_config.get_model_prompt_template(self.model_name)
+            user_prompt = template.format(prompt=prompt)
+            system_prompt = "You are a CLI command expert. Return only the command, no explanations, no markdown, no code blocks."
             
             full_prompt = f"{system_prompt}\n\n{user_prompt}"
             
@@ -60,19 +63,10 @@ class CohereProvider(BaseAIProvider):
     
     def validate_api_key(self) -> bool:
         """
-        Validate Cohere API key
-        
-        Returns:
-            True if API key is valid, False otherwise
+        Validate Cohere API key (format-only to avoid network dependency)
         """
         try:
-            # Test the API key with a simple request
-            response = self.client.generate(
-                model=self.model_name,
-                prompt="test",
-                max_tokens=1
-            )
-            return response.generations is not None
+            return bool(self.api_key and len(self.api_key) > 20)
         except Exception:
             return False
     

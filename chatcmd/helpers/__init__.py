@@ -3,20 +3,31 @@ import inspect
 import subprocess
 import requests
 import importlib.metadata
+import platform
+try:
+    import pyperclip
+except Exception:
+    pyperclip = None
 
 
 class Helpers:
 
     @staticmethod
     def get_latest_version_from_pypi():
-        response = requests.get(f"https://pypi.org/pypi/chatcmd/json")
-        data = response.json()
-        latest_version = data["info"]["version"]
-        installed_version = importlib.metadata.version('chatcmd')
+        try:
+            # Add timeout to prevent hanging
+            response = requests.get(f"https://pypi.org/pypi/chatcmd/json", timeout=3)
+            response.raise_for_status()  # Raise exception for HTTP errors
+            data = response.json()
+            latest_version = data["info"]["version"]
+            installed_version = importlib.metadata.version('chatcmd')
 
-        if installed_version != latest_version:
-            print(f"New version {latest_version} is available! You are currently using version {installed_version}.")
-            print("Consider upgrading using: pip3 install --upgrade chatcmd")
+            if installed_version != latest_version:
+                print(f"New version {latest_version} is available! You are currently using version {installed_version}.")
+                print("Consider upgrading using: pip3 install --upgrade chatcmd")
+        except (requests.RequestException, KeyError, ValueError) as e:
+            # Silently fail version check to avoid disrupting user workflow
+            pass
 
     @staticmethod
     def library_info():
@@ -38,9 +49,39 @@ class Helpers:
     @staticmethod
     def copy_to_clipboard(text):
         try:
-            subprocess.run(['/usr/bin/xclip', '-selection', 'clipboard'], input=text, encoding='utf-8', check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to copy command to clipboard. Find how to avoid this error in the documentation.")
+            system = platform.system()
+            # Prefer pyperclip if available
+            if pyperclip is not None:
+                try:
+                    pyperclip.copy(text)
+                    return
+                except Exception:
+                    pass
+            # Native fallbacks per OS
+            if system == "Darwin":
+                try:
+                    subprocess.run(['pbcopy'], input=text, encoding='utf-8', check=True)
+                    return
+                except Exception:
+                    pass
+            elif system == "Linux":
+                # Try xclip, then xsel
+                for cmd in (['xclip', '-selection', 'clipboard'], ['xsel', '--clipboard', '--input']):
+                    try:
+                        subprocess.run(cmd, input=text, encoding='utf-8', check=True)
+                        return
+                    except Exception:
+                        continue
+            elif system == "Windows":
+                try:
+                    subprocess.run(['clip'], input=text, encoding='utf-8', check=True)
+                    return
+                except Exception:
+                    pass
+            # If all fallbacks fail
+            print(f"Failed to copy to clipboard. Use --no-copy to disable auto copy.")
+        except Exception:
+            print(f"Failed to copy to clipboard. Use --no-copy to disable auto copy.")
 
     @staticmethod
     def clear_input(input):
@@ -49,11 +90,9 @@ class Helpers:
 
     @staticmethod
     def validate_input(prompt):
-        pattern = r'^[A-Za-z0-9 _\-@$\.]+$'
-        if re.match(pattern, str(prompt)):
-            return True
-
-        return False
+        # Allow common natural language and shell characters
+        pattern = r'^[A-Za-z0-9\s_\-@\$\.,:;\/#\+\*=()\[\]{}<>!\\|&"\'?~`]+$'
+        return re.match(pattern, str(prompt)) is not None
 
     @staticmethod
     def validate_api_key(api_key):

@@ -75,15 +75,16 @@ class EnhancedLookup:
             print("Use --set-model-key to update your API key")
             return
         
-        # Get user prompt
-        prompt = helpers.clear_input(input("Prompt: "))
-        
-        if prompt == '':
-            self.prompt(no_copy, model_name)
-            return
-        if prompt == 'exit':
-            print('bye...')
-            return
+        # Get user prompt with proper loop instead of recursion
+        while True:
+            prompt = helpers.clear_input(input("Prompt: "))
+            
+            if prompt == 'exit':
+                print('bye...')
+                return
+            if prompt != '':
+                break
+            print("Please enter a valid prompt or 'exit' to quit.")
         
         # Validate input
         if not helpers.validate_input(prompt.strip()):

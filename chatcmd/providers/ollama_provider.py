@@ -7,6 +7,7 @@ from typing import Optional
 import requests
 import json
 from .base import BaseAIProvider
+from chatcmd.config.model_config import ModelConfig
 
 
 class OllamaProvider(BaseAIProvider):
@@ -16,6 +17,7 @@ class OllamaProvider(BaseAIProvider):
         super().__init__(api_key, **kwargs)
         self.model_name = model_name
         self.base_url = kwargs.get('base_url', 'http://localhost:11434')
+        self.model_config = ModelConfig()
     
     def generate_command(self, prompt: str) -> Optional[str]:
         """
@@ -28,9 +30,10 @@ class OllamaProvider(BaseAIProvider):
             Clean CLI command string or None if generation fails
         """
         try:
-            # Use optimized prompt for CLI command generation
-            system_prompt = "You are a CLI command expert. Generate only the command needed to accomplish the task. Return only the command, no explanations, no markdown, no code blocks."
-            user_prompt = f"Command for: {prompt}"
+            # Use model-specific prompt template
+            template = self.model_config.get_model_prompt_template(self.model_name)
+            user_prompt = template.format(prompt=prompt)
+            system_prompt = "You are a CLI command expert. Return only the command, no explanations, no markdown, no code blocks."
             
             full_prompt = f"{system_prompt}\n\n{user_prompt}"
             

@@ -29,7 +29,12 @@ class API:
     def output_api_key(conn, cursor):
         try:
             api_key = api.get_api_key(conn, cursor)
-            print("\n ChatGPT API key: " + api_key + "\n")
+            if api_key:
+                # Mask API key for security - show first 8 and last 4 characters
+                masked_key = api_key[:8] + "..." + api_key[-4:] if len(api_key) > 12 else "***masked***"
+                print(f"\nChatGPT API key: {masked_key}\n")
+            else:
+                print("\nNo ChatGPT API key found\n")
         except Exception as e:
             print(f"Error 1004: Failed to output API key: {e}")
             return None

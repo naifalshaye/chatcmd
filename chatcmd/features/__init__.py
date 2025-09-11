@@ -1,5 +1,3 @@
-import logging
-
 from fake_useragent import UserAgent
 import requests
 import pyperclip
@@ -139,17 +137,10 @@ class Features:
         else:
             print('Unknown HTTP Code')
     
-    def generate_code_snippet(self, language: str, description: str):
-        """Generate code snippets in various programming languages"""
-        return self.dev_tools.generate_code_snippet(language, description)
-    
     def generate_regex_pattern(self, description: str):
         """Generate regex patterns for common use cases"""
         return self.dev_tools.generate_regex_pattern(description)
     
-    def format_json(self, json_string: str):
-        """Format and validate JSON string"""
-        return self.dev_tools.format_json(json_string)
     
     def base64_encode_decode(self, text: str, operation: str = 'encode'):
         """Encode or decode base64 strings"""
@@ -163,10 +154,6 @@ class Features:
         """Generate common Docker commands"""
         return self.dev_tools.generate_docker_commands(operation)
     
-    def generate_file_hash(self, text: str, algorithm: str = 'md5'):
-        """Generate file hashes"""
-        return self.dev_tools.generate_file_hash(text, algorithm)
-    
     def generate_uuid(self, version: int = 4):
         """Generate UUIDs in different formats"""
         return self.dev_tools.generate_uuid(version)
@@ -178,12 +165,4 @@ class Features:
     def generate_qr_code(self, text: str):
         """Generate QR code for text/URL"""
         return self.dev_tools.generate_qr_code(text)
-    
-    def generate_markdown_table(self, headers: list, rows: list):
-        """Generate markdown tables"""
-        return self.dev_tools.generate_markdown_table(headers, rows)
-    
-    def generate_curl_command(self, url: str, method: str = 'GET', headers: dict = None, data: str = None):
-        """Generate curl commands for API testing"""
-        return self.dev_tools.generate_curl_command(url, method, headers, data)
 

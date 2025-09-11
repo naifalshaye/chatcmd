@@ -45,8 +45,8 @@ class Lookup:
 
                     command = helpers.clear_input(command)
 
-                    if command.find('there is no command') is True and command.find(
-                            'There is no specific command') is True:
+                    if command.find('there is no command') != -1 and command.find(
+                            'There is no specific command') != -1:
                         print('there is no command for this!')
                     else:
                         history = cmd.add_cmd(conn, cursor, prompt, command.strip())
@@ -64,7 +64,6 @@ class Lookup:
                 print("Error 1009: API key is invalid or missing")
                 exit()
 
-            prompt = prompt
             print("Looking up...\n")
 
             client = OpenAI(
@@ -127,8 +126,8 @@ class Lookup:
 
                     response_text = helpers.clear_input(response)
 
-                    if response_text.find('there is no query') is True and response_text.find(
-                            'There is no specific query') is True:
+                    if response_text.find('there is no query') != -1 and response_text.find(
+                            'There is no specific query') != -1:
                         print('there is no query for this!')
                     else:
                         print(" " + response_text.strip())
@@ -144,7 +143,6 @@ class Lookup:
                 print("Error 1009: API key is invalid or missing")
                 exit()
 
-            prompt = prompt
             print("Writing SQL query...\n")
 
             client = OpenAI(
@@ -167,8 +165,6 @@ class Lookup:
 
         except Exception as e:
             print(f"Error 1010: OpenAI API error occurred: {e}. Please double check your API Key.")
-        except Exception as e:
-            print(f"Error 1011: Unhandled exception occurred: {e}")
 
     def prompt_color(self, conn, cursor, api_key, no_copy):
         print("""
@@ -203,8 +199,8 @@ class Lookup:
 
                 response = helpers.clear_input(response)
 
-                if response.find('there is no color') is True and response.find(
-                        'There is no specific color') is True:
+                if response.find('there is no color') != -1 and response.find(
+                        'There is no specific color') != -1:
                     print('there is no color for this!')
                 else:
                     print(" " + response.strip())
@@ -220,7 +216,6 @@ class Lookup:
                 print("Error 1009: API key is invalid or missing")
                 exit()
 
-            prompt = prompt
             print("Getting color code...\n")
 
             client = OpenAI(
@@ -243,8 +238,6 @@ class Lookup:
 
         except Exception as e:
             print(f"Error 1010: OpenAI API error occurred: {e}. Please double check your API Key.")
-        except Exception as e:
-            print(f"Error 1011: Unhandled exception occurred: {e}")
 
     @staticmethod
     def port_lookup(api_key):
@@ -253,7 +246,6 @@ class Lookup:
                 print("Error 1009: API key is invalid or missing")
                 exit()
             prompt = helpers.clear_input(input("Port: "))
-            prompt = prompt
 
             client = OpenAI(
                 api_key=api_key,
@@ -275,8 +267,6 @@ class Lookup:
 
         except Exception as e:
             print(f"Error 1010: OpenAI API error occurred: {e}. Please double check your API Key.")
-        except Exception as e:
-            print(f"Error 1011: Unhandled exception occurred: {e}")
 
 
 lookup = Lookup()

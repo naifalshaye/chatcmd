@@ -6,6 +6,7 @@ Handles GPT model interactions for CLI command generation
 from typing import Optional
 from openai import OpenAI
 from .base import BaseAIProvider
+from chatcmd.config.model_config import ModelConfig
 
 
 class OpenAIProvider(BaseAIProvider):
@@ -15,6 +16,7 @@ class OpenAIProvider(BaseAIProvider):
         super().__init__(api_key, **kwargs)
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
+        self.model_config = ModelConfig()
     
     def generate_command(self, prompt: str) -> Optional[str]:
         """
@@ -27,9 +29,10 @@ class OpenAIProvider(BaseAIProvider):
             Clean CLI command string or None if generation fails
         """
         try:
-            # Use optimized prompt for CLI command generation
-            system_prompt = "You are a CLI command expert. Generate only the command needed to accomplish the task. Return only the command, no explanations, no markdown, no code blocks."
-            user_prompt = f"Command for: {prompt}"
+            # Use model-specific prompt template
+            template = self.model_config.get_model_prompt_template(self.model_name)
+            user_prompt = template.format(prompt=prompt)
+            system_prompt = "You are a CLI command expert. Return only the command, no explanations, no markdown, no code blocks."
             
             response = self.client.chat.completions.create(
                 model=self.model_name,

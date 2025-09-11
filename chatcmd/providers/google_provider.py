@@ -6,6 +6,7 @@ Handles Gemini model interactions for CLI command generation
 from typing import Optional
 import google.generativeai as genai
 from .base import BaseAIProvider
+from chatcmd.config.model_config import ModelConfig
 
 
 class GoogleProvider(BaseAIProvider):
@@ -16,6 +17,7 @@ class GoogleProvider(BaseAIProvider):
         self.model_name = model_name
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(model_name)
+        self.model_config = ModelConfig()
     
     def generate_command(self, prompt: str) -> Optional[str]:
         """
@@ -28,9 +30,10 @@ class GoogleProvider(BaseAIProvider):
             Clean CLI command string or None if generation fails
         """
         try:
-            # Use optimized prompt for CLI command generation
-            system_prompt = "You are a CLI command expert. Generate only the command needed to accomplish the task. Return only the command, no explanations, no markdown, no code blocks."
-            user_prompt = f"Command for: {prompt}"
+            # Use model-specific prompt template
+            template = self.model_config.get_model_prompt_template(self.model_name)
+            user_prompt = template.format(prompt=prompt)
+            system_prompt = "You are a CLI command expert. Return only the command, no explanations, no markdown, no code blocks."
             
             full_prompt = f"{system_prompt}\n\n{user_prompt}"
             
@@ -61,15 +64,10 @@ class GoogleProvider(BaseAIProvider):
     
     def validate_api_key(self) -> bool:
         """
-        Validate Google API key
-        
-        Returns:
-            True if API key is valid, False otherwise
+        Validate Google API key (format-only to avoid network dependency)
         """
         try:
-            # Test the API key with a simple request
-            response = self.model.generate_content("test")
-            return response.text is not None
+            return bool(self.api_key and len(self.api_key) > 20)
         except Exception:
             return False
     

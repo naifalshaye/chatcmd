@@ -1,10 +1,11 @@
 """
 Enhanced API module for ChatCMD
-Handles multiple AI provider API key management
+Handles multiple AI provider API key management with secure storage
 """
 
 from typing import Optional, Dict, Any
 from chatcmd.database.schema_manager import SchemaManager
+from chatcmd.helpers.secure_storage import secure_storage
 
 
 class EnhancedAPI:
@@ -15,7 +16,7 @@ class EnhancedAPI:
     
     def get_provider_api_key(self, provider_name: str) -> Optional[str]:
         """
-        Get API key for a specific provider
+        Get API key for a specific provider from secure storage
         
         Args:
             provider_name: Name of the provider
@@ -23,6 +24,13 @@ class EnhancedAPI:
         Returns:
             API key string or None if not found
         """
+        # Try secure storage first
+        if secure_storage.is_available():
+            api_key = secure_storage.get_api_key(provider_name)
+            if api_key:
+                return api_key
+        
+        # Fallback to database storage
         provider_info = self.db_manager.get_provider(provider_name)
         if provider_info and provider_info['api_key']:
             return provider_info['api_key']
@@ -30,7 +38,7 @@ class EnhancedAPI:
     
     def set_provider_api_key(self, provider_name: str, api_key: str) -> bool:
         """
-        Set API key for a specific provider
+        Set API key for a specific provider in secure storage
         
         Args:
             provider_name: Name of the provider
@@ -40,7 +48,12 @@ class EnhancedAPI:
             True if successful, False otherwise
         """
         try:
-            # Check if provider exists
+            # Store in secure storage first
+            if secure_storage.is_available():
+                if not secure_storage.store_api_key(provider_name, api_key):
+                    print(f"Warning: Could not store API key in secure storage for {provider_name}")
+            
+            # Also store in database for backward compatibility
             existing_provider = self.db_manager.get_provider(provider_name)
             if existing_provider:
                 # Update existing provider
