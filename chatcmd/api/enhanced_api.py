@@ -4,6 +4,9 @@ Handles multiple AI provider API key management with secure storage
 """
 
 from typing import Optional, Dict, Any
+import os
+import json
+from pathlib import Path
 from chatcmd.database.schema_manager import SchemaManager
 from chatcmd.helpers.secure_storage import secure_storage
 
@@ -13,6 +16,9 @@ class EnhancedAPI:
     
     def __init__(self, db_manager: SchemaManager):
         self.db_manager = db_manager
+        # Config file path (non-interactive configuration support)
+        from chatcmd.helpers.platform_utils import platform_utils
+        self.config_path = os.path.join(platform_utils.get_user_data_dir(), 'config.json')
     
     def get_provider_api_key(self, provider_name: str) -> Optional[str]:
         """
@@ -24,13 +30,39 @@ class EnhancedAPI:
         Returns:
             API key string or None if not found
         """
-        # Try secure storage first
+        # 1) Environment variables (non-interactive)
+        #    Supported forms: CHATCMD_<PROVIDER>_API_KEY, CHATCMD_API_KEY_<PROVIDER>
+        candidates = [
+            f"CHATCMD_{provider_name.upper()}_API_KEY",
+            f"CHATCMD_API_KEY_{provider_name.upper()}"
+        ]
+        for env_key in candidates:
+            if os.environ.get(env_key):
+                return os.environ.get(env_key)
+
+        # 2) Config file (non-interactive)
+        try:
+            if os.path.exists(self.config_path):
+                with open(self.config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                if isinstance(config, dict):
+                    # Expected format: {"providers": {"openai": {"api_key": "..."}}}
+                    providers = config.get('providers') or {}
+                    provider_cfg = providers.get(provider_name) or {}
+                    api_key = provider_cfg.get('api_key')
+                    if api_key:
+                        return api_key
+        except Exception:
+            # Silent fail, fall back to secure storage/database
+            pass
+
+        # 3) Secure storage first
         if secure_storage.is_available():
             api_key = secure_storage.get_api_key(provider_name)
             if api_key:
                 return api_key
         
-        # Fallback to database storage
+        # 4) Fallback to database storage
         provider_info = self.db_manager.get_provider(provider_name)
         if provider_info and provider_info['api_key']:
             return provider_info['api_key']
@@ -61,7 +93,23 @@ class EnhancedAPI:
             else:
                 # Add new provider
                 provider_id = self.db_manager.add_provider(provider_name, api_key)
-                return provider_id is not None
+                saved = provider_id is not None
+
+            # Also persist to config file for non-interactive usage
+            try:
+                Path(os.path.dirname(self.config_path)).mkdir(parents=True, exist_ok=True)
+                config: Dict[str, Any] = {}
+                if os.path.exists(self.config_path):
+                    with open(self.config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f) or {}
+                providers = config.setdefault('providers', {})
+                providers.setdefault(provider_name, {})['api_key'] = api_key
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, indent=2)
+            except Exception:
+                pass
+
+            return saved
         except Exception as e:
             print(f"Error setting API key for {provider_name}: {e}")
             return False

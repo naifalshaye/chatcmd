@@ -8,6 +8,13 @@
 
 #### Boost Your Productivity, ***Say Goodbye*** to Manual Searches ####
 
+### What's New in 2.0
+- Multi-provider workflow with unified model management (list models, model info, current model, performance stats)
+- Provider-specific API key storage via secure keyring; legacy OpenAI flags kept for backward compatibility
+- Optional length argument for `--random-password` (default 18)
+- Enhanced, colored help and unified header output
+- Stability and error handling improvements
+
 ## Features ##
 
 ### Core Features
@@ -63,8 +70,6 @@
 ### Developer Tools
 - **Regex Pattern Generator** - Create regex patterns for common use cases
 - **Base64 Encoder/Decoder** - Encode or decode base64 strings
-- **Git Command Helper** - Generate common git commands
-- **Docker Command Generator** - Generate common Docker commands
 - **UUID Generator** - Generate UUIDs in different formats
 - **Timestamp Converter** - Convert between different timestamp formats
 - **QR Code Generator** - Generate QR codes for text/URLs
@@ -75,8 +80,6 @@
 |---------|---------------|--------------|----------|
 | **Regex Pattern Generator** | 🔴 Static Code | ❌ No AI | Instant response, predefined patterns |
 | **Base64 Encoder/Decoder** | 🔴 Static Code | ❌ No AI | Fast, built-in Python library |
-| **Git Command Helper** | 🔴 Static Code | ❌ No AI | Quick reference, no learning curve |
-| **Docker Command Generator** | 🔴 Static Code | ❌ No AI | Instant commands, no API calls |
 | **UUID Generator** | 🔴 Static Code | ❌ No AI | Fast, uses Python's uuid library |
 | **Timestamp Converter** | 🔴 Static Code | ❌ No AI | Reliable, uses datetime library |
 | **QR Code Generator** | 🟡 External API | ⚠️ External Service | Uses api.qrserver.com (not AI) |
@@ -93,7 +96,7 @@
 - **Anthropic Claude Models**: Claude 3 Haiku, Sonnet, Opus
 - **Google Models**: Gemini Pro
 - **Cohere Models**: Command, Command Light
-- **Local Models (Ollama)**: Llama 2, Code Llama, Mistral
+- **Local Models (Ollama)**: Llama 2, Code Llama, Mistral, Llama 3.2 3B
 
 ## Requirements ##
     Python >= 3.8.9
@@ -116,9 +119,9 @@ If pip not installed:
 Installation output should display:
 
     Collecting chatcmd
-    Using cached chatcmd-1.1.13-py3-none-any.whl (6.8 kB)
+    Using cached chatcmd-2.0.0-py3-none-any.whl (6.8 kB)
     Installing collected packages: chatcmd
-    Successfully installed chatcmd-1.1.13
+    Successfully installed chatcmd-2.0.0
 
 ### Upgrade ###
     pip3 install --upgrade chatcmd
@@ -164,8 +167,9 @@ chatcmd --cmd
 # Use specific model
 chatcmd --model gpt-4 --cmd
 
-# Generate git command
-chatcmd --git-command commit
+# Generate a random password with custom length (default is 18)
+chatcmd --random-password 24
+
 ```
 
 ## Usage ##
@@ -174,18 +178,35 @@ chatcmd --git-command commit
 Usage:
 
 chatcmd [options]
-  
-Options:
+
+Core Features:
   -c, --cmd                         looking up a CLI command.
   -q, --sql                         generate SQL query.
+
+Tools:
   --random-useragent                generate a random user-agent
   --get-ip                          get your public IP address.
-  --random-password                 generate a random password.
+  --random-password [<length>]      generate a random password (default: 18).
   --color-code                      get a color Hex code.
   --lookup-http-code                lookup HTTP Code by code number.
   --port-lookup                     lookup any port number.
-  -k, --set-key                     set or update ChatGPT API key.
-  -o, --get-key                     display ChatGPT API key.
+  --regex-pattern                   generate regex pattern for description.
+  --base64-encode                   encode text to base64.
+  --base64-decode                   decode base64 text.
+  --generate-uuid <version>         generate UUID (1, 3, 4, 5).
+  --timestamp-convert <format>      convert timestamp (unix, iso, readable).
+  --qr-code                         generate QR code for text/URL.
+
+Library Options:
+  -k, --set-key                     set or update API key (legacy OpenAI only).
+  -o, --get-key                     display API key (legacy OpenAI only).
+  -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
+  --list-models                     list all available AI models
+  --model-info <model>              show information about a specific model
+  --set-model-key <provider>        set API key for specific provider
+  --get-model-key <provider>        get API key for specific provider
+  --current-model                   show current model and provider
+  --performance-stats               show model performance statistics
   -g, --get-cmd                     display the last command.
   -G, --get-last=<value>            display the last [number] of commands.
   -d, --delete-cmd                  delete the last command.
@@ -197,25 +218,6 @@ Options:
   -h, --help                        display this screen.
   -v, --version                     display ChatCMD version.
   -x, --library-info                display library information.
-  
-  # Developer Tools:
-  --regex-pattern                   generate regex pattern for description.
-  --base64-encode                   encode text to base64.
-  --base64-decode                   decode base64 text.
-  --git-command <operation>         generate git command for operation.
-  --docker-command <operation>      generate docker command for operation.
-  --generate-uuid <version>         generate UUID (1, 3, 4, 5).
-  --timestamp-convert <format>      convert timestamp (unix, iso, readable).
-  --qr-code                         generate QR code for text/URL.
-  
-  # Multi-Model Options:
-  -m, --model <model>               select AI model (gpt-3.5-turbo, gpt-4, claude-3-haiku, etc.)
-  --list-models                     list all available AI models
-  --model-info <model>              show information about a specific model
-  --set-model-key <provider>        set API key for specific provider
-  --get-model-key <provider>        get API key for specific provider
-  --current-model                   show current model and provider
-  --performance-stats               show model performance statistics
 
 ```
 
@@ -235,11 +237,6 @@ chatcmd --model gpt-4 --cmd "create a backup of my database"
 # Generate regex pattern
 chatcmd --regex-pattern "email validation"
 
-# Generate git command
-chatcmd --git-command "create new branch and switch to it"
-
-# Generate Docker command
-chatcmd --docker-command "run container with port mapping"
 
 # Generate UUID
 chatcmd --generate-uuid 4
@@ -269,6 +266,18 @@ chatcmd --current-model
 chatcmd --performance-stats
 ```
 
+### Provider Key Management
+```bash
+# Set API key for a specific provider (recommended)
+chatcmd --set-model-key openai
+chatcmd --set-model-key anthropic
+chatcmd --set-model-key google
+chatcmd --set-model-key cohere
+
+# Get masked API key for a provider
+chatcmd --get-model-key openai
+```
+
 ### Local Models Setup (Ollama)
 ```bash
 # Install Ollama
@@ -279,10 +288,12 @@ chatcmd --performance-stats
 ollama pull llama2
 ollama pull codellama
 ollama pull mistral
+ollama pull llama3.2:3b
 
 # Use local models
 chatcmd --model llama2 --cmd
 chatcmd --model codellama --cmd
+chatcmd --model llama3.2:3b --cmd
 ```
 
 ## Model Comparison ##
@@ -298,6 +309,7 @@ chatcmd --model codellama --cmd
 | command | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | Cost-effective |
 | llama2 (local) | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Privacy, no API costs |
 | codellama (local) | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Coding tasks, privacy |
+| llama3.2:3b (local) | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Small, fast local model |
 
 ## Error Codes ##
 Include an exception message for each error if occurs.

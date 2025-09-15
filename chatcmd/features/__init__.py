@@ -13,6 +13,8 @@ class Features:
 
     @staticmethod
     def generate_user_agent(os=None, browser=None):
+        from chatcmd import Colors, colored_print
+        
         ua = UserAgent()
         if os == "linux":
             if browser == "firefox":
@@ -46,11 +48,13 @@ class Features:
         else:
             user_agent = ua.random
 
-        print(user_agent)
+        colored_print(user_agent, Colors.BRIGHT_GREEN, bold=True)
         pyperclip.copy(user_agent)
 
     @staticmethod
     def get_public_ip_address():
+        from chatcmd import Colors, colored_print
+        
         try:
             # Use a reliable service to get your public IP address
             response = requests.get("https://api.ipify.org?format=json")
@@ -60,25 +64,40 @@ class Features:
                 # Parse the JSON response to extract the IP address
                 ip_data = response.json()
                 public_ip = ip_data["ip"]
-                print(public_ip)
+                colored_print(public_ip, Colors.BRIGHT_GREEN, bold=True)
                 pyperclip.copy(public_ip)
 
             else:
-                print("Unable to retrieve public IP address, please try again.")
+                colored_print("Unable to retrieve public IP address, please try again.", Colors.RED)
         except requests.RequestException as e:
-            print(f"An error occurred: {e}")
+            colored_print(f"An error occurred: {e}", Colors.RED)
 
     @staticmethod
-    def generate_random_password():
-        length = 16
+    def generate_random_password(length=18):
+        """
+        Generate a random password with specified length
+        
+        Args:
+            length (int): Length of the password (default: 18)
+        """
+        # Validate length
+        if length < 1:
+            length = 18
+        elif length > 1000:  # Reasonable upper limit
+            length = 1000
+        
+        from chatcmd import Colors, colored_print
+        
         password = ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation)
                            for _ in range(length))
         pyperclip.copy(password)
-        print(password)
+        colored_print(password, Colors.BRIGHT_GREEN, bold=True)
 
     @staticmethod
     def lookup_http_code():
-        print("""
+        from chatcmd import Colors, colored_print
+        
+        colored_print("""
 
          ######  ##     ##    ###    ########  ######  ##     ## ########
         ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
@@ -88,7 +107,7 @@ class Features:
         ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             Lookup HTTP Code by code
-        """)
+        """, Colors.BRIGHT_GREEN)
         code = input("HTTP Code: ")
         http_codes = {
             '100': "Continue",
@@ -133,9 +152,9 @@ class Features:
             '505': "HTTP Version Not Supported"
         }
         if code in http_codes:
-            print(http_codes[code])
+            colored_print(http_codes[code], Colors.BRIGHT_GREEN, bold=True)
         else:
-            print('Unknown HTTP Code')
+            colored_print('Unknown HTTP Code', Colors.RED)
     
     def generate_regex_pattern(self, description: str):
         """Generate regex patterns for common use cases"""
@@ -146,13 +165,6 @@ class Features:
         """Encode or decode base64 strings"""
         return self.dev_tools.base64_encode_decode(text, operation)
     
-    def generate_git_commands(self, operation: str):
-        """Generate common git commands"""
-        return self.dev_tools.generate_git_commands(operation)
-    
-    def generate_docker_commands(self, operation: str):
-        """Generate common Docker commands"""
-        return self.dev_tools.generate_docker_commands(operation)
     
     def generate_uuid(self, version: int = 4):
         """Generate UUIDs in different formats"""

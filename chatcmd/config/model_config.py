@@ -22,6 +22,30 @@ class ModelInfo:
 class ModelConfig:
     """Configuration manager for AI models"""
     
+    # Common aliases to normalize user-provided model names to canonical keys
+    # e.g., "llama-3.2-3b" -> "llama3.2:3b"
+    ALIASES: Dict[str, str] = {
+        # OpenAI
+        'gpt4': 'gpt-4',
+        'gpt-4o': 'gpt-4',
+        'gpt3.5': 'gpt-3.5-turbo',
+        'gpt-3.5': 'gpt-3.5-turbo',
+        # Anthropic
+        'claude-haiku': 'claude-3-haiku',
+        'claude-sonnet': 'claude-3-sonnet',
+        'claude-opus': 'claude-3-opus',
+        # Google
+        'gemini': 'gemini-pro',
+        # Cohere
+        'command-light': 'command-light',
+        'command-lightnight': 'command-light',
+        # Ollama - Llama 3.2 3B
+        'llama-3.2-3b': 'llama3.2:3b',
+        'llama3_2_3b': 'llama3.2:3b',
+        'llama32-3b': 'llama3.2:3b',
+        'llama3.2-3b': 'llama3.2:3b',
+    }
+
     # Supported models configuration
     SUPPORTED_MODELS = {
         # OpenAI Models
@@ -128,6 +152,14 @@ class ModelConfig:
             max_tokens=100,
             temperature=0.7,
             description='Local Mistral model via Ollama'
+        ),
+        'llama3.2:3b': ModelInfo(
+            name='llama3.2:3b',
+            display_name='Llama 3.2 3B (Local)',
+            provider='ollama',
+            max_tokens=100,
+            temperature=0.7,
+            description='Local Llama 3.2 3B model via Ollama'
         )
     }
     
@@ -137,9 +169,26 @@ class ModelConfig:
     def __init__(self):
         self.current_model = self.DEFAULT_MODEL
     
+    def normalize_model_name(self, model_name: str) -> Optional[str]:
+        """Normalize user-entered model name to a supported canonical name."""
+        if not model_name:
+            return None
+        key = model_name.strip().lower()
+        # Exact match
+        if key in (name.lower() for name in self.SUPPORTED_MODELS.keys()):
+            # Return the canonical with original casing from SUPPORTED_MODELS
+            for canonical in self.SUPPORTED_MODELS.keys():
+                if canonical.lower() == key:
+                    return canonical
+        # Alias match
+        if key in self.ALIASES:
+            return self.ALIASES[key]
+        return None
+    
     def get_model_info(self, model_name: str) -> Optional[ModelInfo]:
         """Get information about a specific model"""
-        return self.SUPPORTED_MODELS.get(model_name)
+        normalized = self.normalize_model_name(model_name) or model_name
+        return self.SUPPORTED_MODELS.get(normalized)
     
     def get_available_models(self) -> List[ModelInfo]:
         """Get list of all available models"""
@@ -156,17 +205,19 @@ class ModelConfig:
         return list(providers)
     
     def is_model_supported(self, model_name: str) -> bool:
-        """Check if a model is supported"""
-        return model_name in self.SUPPORTED_MODELS
+        """Check if a model is supported (with normalization)."""
+        normalized = self.normalize_model_name(model_name) or model_name
+        return normalized in self.SUPPORTED_MODELS
     
     def get_default_model(self) -> str:
         """Get the default model name"""
         return self.DEFAULT_MODEL
     
     def set_current_model(self, model_name: str) -> bool:
-        """Set the current model"""
-        if self.is_model_supported(model_name):
-            self.current_model = model_name
+        """Set the current model (with normalization)."""
+        normalized = self.normalize_model_name(model_name) or model_name
+        if self.is_model_supported(normalized):
+            self.current_model = normalized
             return True
         return False
     

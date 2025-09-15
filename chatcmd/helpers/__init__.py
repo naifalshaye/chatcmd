@@ -13,6 +13,27 @@ except Exception:
 class Helpers:
 
     @staticmethod
+    def _compare_versions(version1, version2):
+        """Compare two version strings. Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal."""
+        def normalize(v):
+            return [int(x) for x in v.split('.')]
+        
+        v1_parts = normalize(version1)
+        v2_parts = normalize(version2)
+        
+        # Pad shorter version with zeros
+        max_len = max(len(v1_parts), len(v2_parts))
+        v1_parts.extend([0] * (max_len - len(v1_parts)))
+        v2_parts.extend([0] * (max_len - len(v2_parts)))
+        
+        for i in range(max_len):
+            if v1_parts[i] > v2_parts[i]:
+                return 1
+            elif v1_parts[i] < v2_parts[i]:
+                return -1
+        return 0
+
+    @staticmethod
     def get_latest_version_from_pypi():
         try:
             # Add timeout to prevent hanging
@@ -22,29 +43,37 @@ class Helpers:
             latest_version = data["info"]["version"]
             installed_version = importlib.metadata.version('chatcmd')
 
-            if installed_version != latest_version:
+            # Only notify if PyPI has a newer version than installed
+            comparison = Helpers._compare_versions(latest_version, installed_version)
+            if comparison > 0:  # latest > installed
                 print(f"New version {latest_version} is available! You are currently using version {installed_version}.")
                 print("Consider upgrading using: pip3 install --upgrade chatcmd")
+            # If installed >= latest, don't show any message
         except (requests.RequestException, KeyError, ValueError) as e:
             # Silently fail version check to avoid disrupting user workflow
             pass
 
     @staticmethod
     def library_info():
-        print(
-            "----------------------------------------------------------------\n"
-            "  Library Name: ChatCMD\n"
-            "  Library Source [PyPi]: https://pypi.org/naifalshaye/chatcmd\n"
-            "  Library Source [Github]: https://github.com/naifalshaye/chatcmd\n"
-            "  Documentation: https://github.com/naifalshaye/chatcmd#readme\n"
-            "  Bug Tracker: https://github.com/naifalshaye/chatcmd/issues\n"
-            "  Published Date: 2023-05-15\n"
-            "  License: MIT\n"
-            "  Author: Naif Alshaye\n"
-            "  Author Email: naif@naif.io\n"
-            "  Author Website: https://naif.io\n"
-            "----------------------------------------------------------------"
-        )
+        from chatcmd import Colors, colored_print
+        try:
+            current_version = importlib.metadata.version('chatcmd')
+        except Exception:
+            current_version = "unknown"
+        
+        colored_print("----------------------------------------------------------------", Colors.GOLD)
+        colored_print("  Library Name: ChatCMD", Colors.BRIGHT_GREEN, bold=True)
+        colored_print("  Library Source [PyPi]: https://pypi.org/naifalshaye/chatcmd", Colors.BLUE)
+        colored_print("  Library Source [Github]: https://github.com/naifalshaye/chatcmd", Colors.BLUE)
+        colored_print("  Documentation: https://github.com/naifalshaye/chatcmd#readme", Colors.BLUE)
+        colored_print("  Bug Tracker: https://github.com/naifalshaye/chatcmd/issues", Colors.BLUE)
+        colored_print(f"  Current Version: {current_version}", Colors.BRIGHT_YELLOW)
+        colored_print("  Published Date: 2023-05-15", Colors.YELLOW)
+        colored_print("  License: MIT", Colors.GREEN)
+        colored_print("  Author: Naif Alshaye", Colors.WHITE)
+        colored_print("  Author Email: naif@naif.io", Colors.WHITE)
+        colored_print("  Author Website: https://naif.io", Colors.WHITE)
+        colored_print("----------------------------------------------------------------", Colors.GOLD)
 
     @staticmethod
     def copy_to_clipboard(text):

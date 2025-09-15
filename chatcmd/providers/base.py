@@ -28,6 +28,19 @@ class BaseAIProvider(ABC):
         pass
     
     @abstractmethod
+    def generate_sql_query(self, prompt: str) -> Optional[str]:
+        """
+        Generate a clean SQL query from user prompt
+        
+        Args:
+            prompt: User's description of what they want to do
+            
+        Returns:
+            Clean SQL query string or None if generation fails
+        """
+        pass
+    
+    @abstractmethod
     def validate_api_key(self) -> bool:
         """
         Validate the API key for this provider
@@ -67,12 +80,19 @@ class BaseAIProvider(ABC):
         if response.startswith('```') and response.endswith('```'):
             lines = response.split('\n')
             response = '\n'.join(lines[1:-1])
+        elif response.startswith('```bash') and response.endswith('```'):
+            lines = response.split('\n')
+            response = '\n'.join(lines[1:-1])
+        elif response.startswith('```sh') and response.endswith('```'):
+            lines = response.split('\n')
+            response = '\n'.join(lines[1:-1])
         
         # Remove command prefixes
         prefixes_to_remove = [
             'Command:', 'Command is:', 'The command is:', 'Use:', 'Try:',
             'Here is the command:', 'Here\'s the command:', 'CLI command:',
-            'Terminal command:', 'Run:', 'Execute:'
+            'Terminal command:', 'Run:', 'Execute:', 'The command:', 'Here\'s:',
+            'Here is:', 'You can use:', 'Use this command:', 'Run this:'
         ]
         
         for prefix in prefixes_to_remove:
@@ -82,8 +102,27 @@ class BaseAIProvider(ABC):
         # Remove explanatory text after the command
         lines = response.split('\n')
         if lines:
-            # Take only the first line (the command)
-            command = lines[0].strip()
+            # Take only the command lines (until we hit explanatory text)
+            command_lines = []
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                # Stop if we hit explanatory text
+                if any(phrase in line.lower() for phrase in [
+                    'this command', 'the command', 'explanation', 'note:', 'note that',
+                    'remember', 'keep in mind', 'also', 'additionally', 'this will',
+                    'for example', 'you can', 'alternatively', 'or you can'
+                ]):
+                    break
+                command_lines.append(line)
+            
+            if command_lines:
+                # Join multiple lines if it's a multi-line command
+                command = ' '.join(command_lines)
+            else:
+                # Fallback to first line
+                command = lines[0].strip()
             
             # Remove any trailing punctuation
             command = command.rstrip('.,!?')
@@ -147,5 +186,112 @@ class BaseAIProvider(ABC):
         # Allow commands that start with environment variables
         if '=' in command and command.split('=')[0].replace('_', '').isalnum():
             return True
+        
+        return False
+    
+    def clean_sql_output(self, response: str) -> str:
+        """
+        Clean AI response to extract only the SQL query
+        
+        Args:
+            response: Raw AI response
+            
+        Returns:
+            Clean SQL query string
+        """
+        if not response:
+            return ""
+            
+        # Remove common prefixes and suffixes
+        response = response.strip()
+        
+        # Remove markdown code blocks
+        if response.startswith('```') and response.endswith('```'):
+            lines = response.split('\n')
+            response = '\n'.join(lines[1:-1])
+        elif response.startswith('```sql') and response.endswith('```'):
+            lines = response.split('\n')
+            response = '\n'.join(lines[1:-1])
+        
+        # Remove only explanatory prefixes, NOT SQL keywords
+        prefixes_to_remove = [
+            'Query:', 'SQL Query:', 'The query is:', 'Here is the query:', 
+            'Here\'s the query:', 'SQL:', 'Here\'s the SQL:', 'Here is the SQL:',
+            'The SQL query is:', 'Here\'s the SQL query:', 'Here is the SQL query:'
+        ]
+        
+        for prefix in prefixes_to_remove:
+            if response.lower().startswith(prefix.lower()):
+                response = response[len(prefix):].strip()
+        
+        # Remove explanatory text after the query
+        lines = response.split('\n')
+        if lines:
+            # Take only the SQL query lines (until we hit explanatory text)
+            query_lines = []
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                # Stop if we hit explanatory text
+                if any(phrase in line.lower() for phrase in [
+                    'this query', 'the query', 'explanation', 'note:', 'note that',
+                    'remember', 'keep in mind', 'also', 'additionally', 'this will',
+                    'this sql', 'the above', 'for example', 'you can'
+                ]):
+                    break
+                query_lines.append(line)
+            
+            if query_lines:
+                response = '\n'.join(query_lines)
+            
+            # Remove any trailing punctuation
+            response = response.rstrip('.,!?')
+            
+            return response
+        
+        return response
+    
+    def is_valid_sql_query(self, query: str) -> bool:
+        """
+        Basic validation to ensure the response looks like a SQL query
+        
+        Args:
+            query: SQL query string to validate
+            
+        Returns:
+            True if query appears valid, False otherwise
+        """
+        if not query or len(query.strip()) < 3:
+            return False
+            
+        query = query.strip().upper()
+        
+        # Should not contain explanatory text
+        explanatory_phrases = [
+            'THERE IS NO QUERY',
+            'NO SPECIFIC QUERY',
+            'NOT A QUERY',
+            'CANNOT FIND',
+            'UNABLE TO',
+            'SORRY,',
+            'I CANNOT',
+            'I DON\'T KNOW'
+        ]
+        
+        for phrase in explanatory_phrases:
+            if phrase in query:
+                return False
+        
+        # Should contain SQL keywords
+        sql_keywords = [
+            'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER',
+            'FROM', 'WHERE', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'OUTER',
+            'GROUP BY', 'ORDER BY', 'HAVING', 'UNION', 'UNION ALL'
+        ]
+        
+        for keyword in sql_keywords:
+            if keyword in query:
+                return True
         
         return False

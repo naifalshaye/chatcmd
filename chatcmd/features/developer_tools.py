@@ -30,7 +30,9 @@ class DeveloperTools:
         Returns:
             Generated regex pattern
         """
-        print("""
+        from chatcmd import Colors, colored_print
+        
+        colored_print("""
         
          ######  ##     ##    ###    ########  ######  ##     ## ########
         ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
@@ -40,7 +42,7 @@ class DeveloperTools:
         ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             Generate Regex Pattern
-        """)
+        """, Colors.BRIGHT_GREEN)
         
         # Common regex patterns
         patterns = {
@@ -74,7 +76,7 @@ class DeveloperTools:
             else:
                 regex = r'.*'
         
-        print(f"Regex Pattern: {regex}")
+        colored_print(f"Regex Pattern: {regex}", Colors.BRIGHT_GREEN, bold=True)
         pyperclip.copy(regex)
         return regex
     
@@ -90,7 +92,7 @@ class DeveloperTools:
         Returns:
             Encoded or decoded string
         """
-        print(f"""
+        colored_print(f"""
         
          ######  ##     ##    ###    ########  ######  ##     ## ########
         ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
@@ -100,142 +102,23 @@ class DeveloperTools:
         ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                         Base64 {operation.upper()}
-        """)
+        """, Colors.BRIGHT_GREEN)
         
         try:
             if operation.lower() == 'encode':
                 result = base64.b64encode(text.encode('utf-8')).decode('utf-8')
-                print(f"Encoded: {result}")
+                colored_print(f"Encoded: {result}", Colors.BRIGHT_GREEN, bold=True)
             else:  # decode
                 result = base64.b64decode(text.encode('utf-8')).decode('utf-8')
-                print(f"Decoded: {result}")
+                colored_print(f"Decoded: {result}", Colors.BRIGHT_GREEN, bold=True)
             
             pyperclip.copy(result)
             return result
         except Exception as e:
             error_msg = f"Error: {e}"
-            print(error_msg)
+            colored_print(error_msg, Colors.RED, bold=True)
             return error_msg
     
-    def generate_git_commands(self, operation: str) -> str:
-        """
-        Generate common git commands
-        
-        Args:
-            operation: Git operation (commit, push, pull, etc.)
-            
-        Returns:
-            Git command string
-        """
-        print("""
-        
-         ######  ##     ##    ###    ########  ######  ##     ## ########
-        ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
-        ##       ##     ##  ##   ##     ##    ##       #### #### ##     ##
-        ##       ######### ##     ##    ##    ##       ## ### ## ##     ##
-        ##       ##     ## #########    ##    ##       ##     ## ##     ##
-        ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
-         ######  ##     ## ##     ##    ##     ######  ##     ## ########
-                            Git Command Helper
-        """)
-        
-        git_commands = {
-            'init': 'git init',
-            'clone': 'git clone <repository-url>',
-            'add': 'git add .',
-            'commit': 'git commit -m "commit message"',
-            'push': 'git push origin main',
-            'pull': 'git pull origin main',
-            'status': 'git status',
-            'log': 'git log --oneline',
-            'branch': 'git branch -a',
-            'checkout': 'git checkout -b new-branch',
-            'merge': 'git merge branch-name',
-            'rebase': 'git rebase main',
-            'stash': 'git stash',
-            'reset': 'git reset --hard HEAD',
-            'remote': 'git remote -v',
-            'fetch': 'git fetch origin',
-            'diff': 'git diff',
-            'blame': 'git blame filename',
-            'revert': 'git revert commit-hash',
-            'cherry-pick': 'git cherry-pick commit-hash'
-        }
-        
-        operation_lower = operation.lower()
-        
-        # Find matching command
-        for key, command in git_commands.items():
-            if key in operation_lower:
-                print(f"Git Command: {command}")
-                pyperclip.copy(command)
-                return command
-        
-        # Default to status if no match
-        default_cmd = 'git status'
-        print(f"Git Command: {default_cmd}")
-        pyperclip.copy(default_cmd)
-        return default_cmd
-    
-    def generate_docker_commands(self, operation: str) -> str:
-        """
-        Generate common Docker commands
-        
-        Args:
-            operation: Docker operation (run, build, push, etc.)
-            
-        Returns:
-            Docker command string
-        """
-        print("""
-        
-         ######  ##     ##    ###    ########  ######  ##     ## ########
-        ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
-        ##       ##     ##  ##   ##     ##    ##       #### #### ##     ##
-        ##       ######### ##     ##    ##    ##       ## ### ## ##     ##
-        ##       ##     ## #########    ##    ##       ##     ## ##     ##
-        ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
-         ######  ##     ## ##     ##    ##     ######  ##     ## ########
-                            Docker Command Helper
-        """)
-        
-        docker_commands = {
-            'run': 'docker run -it <image-name>',
-            'build': 'docker build -t <image-name> .',
-            'push': 'docker push <image-name>',
-            'pull': 'docker pull <image-name>',
-            'images': 'docker images',
-            'ps': 'docker ps -a',
-            'exec': 'docker exec -it <container-id> /bin/bash',
-            'stop': 'docker stop <container-id>',
-            'start': 'docker start <container-id>',
-            'rm': 'docker rm <container-id>',
-            'rmi': 'docker rmi <image-id>',
-            'logs': 'docker logs <container-id>',
-            'inspect': 'docker inspect <container-id>',
-            'network': 'docker network ls',
-            'volume': 'docker volume ls',
-            'compose': 'docker-compose up -d',
-            'down': 'docker-compose down',
-            'restart': 'docker restart <container-id>',
-            'stats': 'docker stats',
-            'system': 'docker system prune -a'
-        }
-        
-        operation_lower = operation.lower()
-        
-        # Find matching command
-        for key, command in docker_commands.items():
-            if key in operation_lower:
-                print(f"Docker Command: {command}")
-                pyperclip.copy(command)
-                return command
-        
-        # Default to ps if no match
-        default_cmd = 'docker ps -a'
-        print(f"Docker Command: {default_cmd}")
-        pyperclip.copy(default_cmd)
-        return default_cmd
     
     
     def generate_uuid(self, version: int = 4) -> str:
@@ -248,7 +131,7 @@ class DeveloperTools:
         Returns:
             Generated UUID
         """
-        print(f"""
+        colored_print(f"""
         
          ######  ##     ##    ###    ########  ######  ##     ## ########
         ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
@@ -258,7 +141,7 @@ class DeveloperTools:
         ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             Generate UUID v{version}
-        """)
+        """, Colors.BRIGHT_GREEN)
         
         try:
             if version == 1:
@@ -272,7 +155,7 @@ class DeveloperTools:
             else:
                 uuid_value = str(uuid.uuid4())
             
-            print(f"UUID v{version}: {uuid_value}")
+            colored_print(f"UUID v{version}: {uuid_value}", Colors.BRIGHT_GREEN, bold=True)
             pyperclip.copy(uuid_value)
             return uuid_value
         except Exception as e:
@@ -291,7 +174,7 @@ class DeveloperTools:
         Returns:
             Converted timestamp
         """
-        print(f"""
+        colored_print(f"""
         
          ######  ##     ##    ###    ########  ######  ##     ## ########
         ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
@@ -301,7 +184,7 @@ class DeveloperTools:
         ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                         Timestamp Converter
-        """)
+        """, Colors.BRIGHT_GREEN)
         
         try:
             # Try to parse as unix timestamp first
@@ -322,7 +205,7 @@ class DeveloperTools:
             else:
                 result = str(unix_time)
             
-            print(f"Converted timestamp: {result}")
+            colored_print(f"Converted timestamp: {result}", Colors.BRIGHT_GREEN, bold=True)
             pyperclip.copy(result)
             return result
         except Exception as e:
@@ -340,7 +223,7 @@ class DeveloperTools:
         Returns:
             QR code URL
         """
-        print("""
+        colored_print("""
         
          ######  ##     ##    ###    ########  ######  ##     ## ########
         ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
@@ -350,15 +233,15 @@ class DeveloperTools:
         ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             QR Code Generator
-        """)
+        """, Colors.BRIGHT_GREEN)
         
         try:
             # URL encode the text
             encoded_text = quote(text)
             qr_url = f"{self.qr_api_url}?size=200x200&data={encoded_text}"
             
-            print(f"QR Code URL: {qr_url}")
-            print(f"Text: {text}")
+            colored_print(f"QR Code URL: {qr_url}", Colors.BRIGHT_GREEN, bold=True)
+            colored_print(f"Text: {text}", Colors.CYAN)
             pyperclip.copy(qr_url)
             return qr_url
         except Exception as e:

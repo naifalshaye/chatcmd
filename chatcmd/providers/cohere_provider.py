@@ -61,6 +61,76 @@ class CohereProvider(BaseAIProvider):
             print(f"Cohere API error: {e}")
             return None
     
+    def generate_sql_query(self, prompt: str) -> Optional[str]:
+        """
+        Generate a SQL query using Cohere models
+        
+        Args:
+            prompt: User's description of what they want to do
+            
+        Returns:
+            Clean SQL query string or None if generation fails
+        """
+        try:
+            system_prompt = "You are a database engineer. Write a SQL query that {prompt}. Return only the SQL query, no explanations, no markdown, no code blocks."
+            user_prompt = system_prompt.format(prompt=prompt)
+            
+            response = self.client.generate(
+                model=self.model_name,
+                prompt=user_prompt,
+                max_tokens=self.config.get('max_tokens', 200),
+                temperature=self.config.get('temperature', 0.7),
+                stop_sequences=["\n\n", "Explanation:", "Note:"]
+            )
+            
+            if response.generations and len(response.generations) > 0:
+                raw_query = response.generations[0].text.strip()
+                clean_query = self.clean_sql_output(raw_query)
+                
+                # Validate the query
+                if self.is_valid_sql_query(clean_query):
+                    return clean_query
+                else:
+                    # Try to extract query from response
+                    return self._extract_sql_from_response(raw_query)
+            
+            return None
+            
+        except Exception as e:
+            print(f"Cohere API error: {e}")
+            return None
+    
+    def _extract_sql_from_response(self, response: str) -> Optional[str]:
+        """Extract SQL query from response that might contain extra text"""
+        lines = response.split('\n')
+        query_lines = []
+        found_sql_start = False
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Look for SQL keywords to start collecting
+            if any(keyword in line.upper() for keyword in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER']):
+                found_sql_start = True
+                query_lines.append(line)
+            elif found_sql_start:  # If we've started collecting query lines, continue until we hit explanatory text
+                if any(phrase in line.lower() for phrase in ['this query', 'the query', 'explanation', 'note:', 'this will', 'for example', 'you can']):
+                    break
+                # Only add non-empty lines that look like SQL
+                if line and not line.startswith(('--', '/*', '#')):  # Skip comments
+                    query_lines.append(line)
+        
+        if query_lines:
+            # Join lines and clean up
+            query = ' '.join(query_lines)
+            # Remove extra spaces and ensure proper formatting
+            query = ' '.join(query.split())
+            return query
+        
+        return None
+    
     def validate_api_key(self) -> bool:
         """
         Validate Cohere API key (format-only to avoid network dependency)
