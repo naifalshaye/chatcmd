@@ -127,6 +127,11 @@ class BaseAIProvider(ABC):
             # Remove any trailing punctuation
             command = command.rstrip('.,!?')
             
+            # Hardened: reject command substitution/backticks/here-doc tokens by default
+            unsafe_tokens = ['`', '$(', '<<']
+            if any(tok in command for tok in unsafe_tokens):
+                return ""
+            
             return command
         
         return response

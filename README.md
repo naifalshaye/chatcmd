@@ -119,9 +119,9 @@ If pip not installed:
 Installation output should display:
 
     Collecting chatcmd
-    Using cached chatcmd-2.0.0-py3-none-any.whl (6.8 kB)
+    Using cached chatcmd-2.0.1-py3-none-any.whl (6.8 kB)
     Installing collected packages: chatcmd
-    Successfully installed chatcmd-2.0.0
+    Successfully installed chatcmd-2.0.1
 
 ### Upgrade ###
     pip3 install --upgrade chatcmd

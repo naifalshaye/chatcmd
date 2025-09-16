@@ -43,6 +43,7 @@ Library Options:
   --get-model-key <provider>        get API key for specific provider
   --current-model                   show current model and provider
   --performance-stats               show model performance statistics
+  --reset-config                    clear config, stored keys (with confirmation)
   -g, --get-cmd                     display the last command.
   -G, --get-last=<value>            display the last [number] of commands.
   -d, --delete-cmd                  delete the last command.
@@ -95,6 +96,10 @@ def colored_print(text, color=Colors.GREEN, bold=False, end="\n"):
     """Print colored text to terminal"""
     # Honor quiet/no-color modes and non-TTY
     if os.environ.get('CHATCMD_QUIET') == '1':
+        return
+    if os.environ.get('CHATCMD_JSON') == '1':
+        # In JSON mode, skip colored prints; caller should print structured JSON
+        print(text, end=end)
         return
     if os.environ.get('CHATCMD_NO_COLOR') == '1':
         print(text, end=end)
@@ -309,38 +314,70 @@ class ChatCMD:
 
             # Handle new multi-model options first
             if self.args['--list-models']:
-                self.enhanced_lookup.list_available_models()
+                if os.environ.get('CHATCMD_JSON') == '1':
+                    models = []
+                    providers = self.model_config.get_providers()
+                    for provider in providers:
+                        for m in self.model_config.get_models_by_provider(provider):
+                            models.append({
+                                'name': m.name,
+                                'display_name': m.display_name,
+                                'provider': m.provider
+                            })
+                    import json
+                    print(json.dumps({'models': models}))
+                else:
+                    self.enhanced_lookup.list_available_models()
                 return
             
             if self.args['--model-info']:
                 model_name = self.args['--model-info']
                 model_info = self.model_config.get_model_info(model_name)
                 if model_info:
-                    colored_print(f"\nModel: {model_info.display_name}", Colors.GREEN, bold=True)
-                    colored_print(f"Provider: {model_info.provider}", Colors.BLUE)
-                    colored_print(f"Description: {model_info.description}", Colors.WHITE)
-                    colored_print(f"Max Tokens: {model_info.max_tokens}", Colors.YELLOW)
-                    colored_print(f"Temperature: {model_info.temperature}", Colors.YELLOW)
+                    if os.environ.get('CHATCMD_JSON') == '1':
+                        import json
+                        print(json.dumps({
+                            'name': model_info.name,
+                            'display_name': model_info.display_name,
+                            'provider': model_info.provider,
+                            'description': model_info.description,
+                            'max_tokens': model_info.max_tokens,
+                            'temperature': model_info.temperature
+                        }))
+                    else:
+                        colored_print(f"\nModel: {model_info.display_name}", Colors.GREEN, bold=True)
+                        colored_print(f"Provider: {model_info.provider}", Colors.BLUE)
+                        colored_print(f"Description: {model_info.description}", Colors.WHITE)
+                        colored_print(f"Max Tokens: {model_info.max_tokens}", Colors.YELLOW)
+                        colored_print(f"Temperature: {model_info.temperature}", Colors.YELLOW)
                 else:
                     colored_print(f"Model '{model_name}' not found", Colors.RED)
                 return
             
             if self.args['--current-model']:
                 current_info = self.enhanced_lookup.get_current_model_info()
-                colored_print(f"\nCurrent Model: {current_info['model_display_name']} ({current_info['model_name']})", Colors.GREEN, bold=True)
-                colored_print(f"Provider: {current_info['provider_name']}", Colors.BLUE)
-                status_color = Colors.GREEN if current_info['provider_configured'] else Colors.RED
-                colored_print(f"Configured: {'Yes' if current_info['provider_configured'] else 'No'}", status_color)
+                if os.environ.get('CHATCMD_JSON') == '1':
+                    import json
+                    print(json.dumps({'current': current_info}))
+                else:
+                    colored_print(f"\nCurrent Model: {current_info['model_display_name']} ({current_info['model_name']})", Colors.GREEN, bold=True)
+                    colored_print(f"Provider: {current_info['provider_name']}", Colors.BLUE)
+                    status_color = Colors.GREEN if current_info['provider_configured'] else Colors.RED
+                    colored_print(f"Configured: {'Yes' if current_info['provider_configured'] else 'No'}", status_color)
                 return
             
             if self.args['--performance-stats']:
                 stats = self.enhanced_lookup.get_performance_stats()
-                colored_print(f"\nPerformance Statistics (Last 7 days):", Colors.CYAN, bold=True)
-                colored_print(f"Total Requests: {stats['total_requests']}", Colors.GREEN)
-                colored_print(f"Successful: {stats['successful_requests']}", Colors.GREEN)
-                colored_print(f"Failed: {stats['failed_requests']}", Colors.RED)
-                colored_print(f"Average Response Time: {stats['average_response_time']}s", Colors.YELLOW)
-                colored_print(f"Models Used: {', '.join(stats['models_used'])}", Colors.BLUE)
+                if os.environ.get('CHATCMD_JSON') == '1':
+                    import json
+                    print(json.dumps({'stats': stats}))
+                else:
+                    colored_print(f"\nPerformance Statistics (Last 7 days):", Colors.CYAN, bold=True)
+                    colored_print(f"Total Requests: {stats['total_requests']}", Colors.GREEN)
+                    colored_print(f"Successful: {stats['successful_requests']}", Colors.GREEN)
+                    colored_print(f"Failed: {stats['failed_requests']}", Colors.RED)
+                    colored_print(f"Average Response Time: {stats['average_response_time']}s", Colors.YELLOW)
+                    colored_print(f"Models Used: {', '.join(stats['models_used'])}", Colors.BLUE)
                 return
             
             if self.args['--set-model-key']:
@@ -358,9 +395,13 @@ class ChatCMD:
                 # Normalize early for better UX
                 normalized = self.model_config.normalize_model_name(model_name) or model_name
                 if self.enhanced_lookup.set_model(normalized):
-                    colored_print(f"Model set to: {model_name}", Colors.GREEN, bold=True)
+                    colored_print(f"Model set to: {normalized}", Colors.GREEN, bold=True)
                 else:
-                    colored_print(f"Failed to set model: {model_name}", Colors.RED)
+                    suggestion = self.model_config.suggest_model(model_name) or ""
+                    if suggestion:
+                        colored_print(f"Unknown model '{model_name}'. Did you mean '{suggestion}'?", Colors.YELLOW)
+                    else:
+                        colored_print(f"Failed to set model: {model_name}", Colors.RED)
                 return
             
             # Handle model selection for lookup commands
@@ -432,6 +473,22 @@ class ChatCMD:
                 cmd.get_db_size(self.db_path)
             elif self.args['--library-info']:
                 helpers.library_info()
+            elif self.args['--reset-config']:
+                auto_yes = os.environ.get('CHATCMD_YES') == '1'
+                if not auto_yes:
+                    try:
+                        confirm = input("This will clear local config and stored API keys. Proceed? (y/N): ").strip().lower()
+                        if confirm not in ('y', 'yes'):
+                            colored_print("Cancelled.", Colors.YELLOW)
+                            return
+                    except KeyboardInterrupt:
+                        colored_print("\nCancelled.", Colors.YELLOW)
+                        return
+                if self.enhanced_api.reset_configuration():
+                    colored_print("Configuration reset successfully.", Colors.GREEN, bold=True)
+                else:
+                    colored_print("Failed to reset configuration.", Colors.RED)
+                return
             elif self.args['--no-copy']:
                 if selected_model:
                     self.enhanced_lookup.prompt(True, selected_model)

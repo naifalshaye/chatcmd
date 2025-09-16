@@ -147,6 +147,49 @@ class EnhancedAPI:
             return False
         except Exception:
             return False
+
+    def reset_configuration(self) -> bool:
+        """Safely clear config.json, secure/local stored keys, and DB provider keys."""
+        try:
+            # 1) Delete config.json
+            try:
+                if os.path.exists(self.config_path):
+                    os.remove(self.config_path)
+            except Exception:
+                pass
+
+            # 2) Delete secure storage keys and local encrypted files
+            try:
+                providers = self.db_manager.get_all_providers()
+                for p in providers:
+                    try:
+                        secure_storage.delete_api_key(p['provider_name'])
+                    except Exception:
+                        continue
+                # Attempt to delete local encrypted files used by fallback storage
+                user_dir = platform_utils.get_user_data_dir()
+                for fn in ['api_keys.enc', '.encryption_key']:
+                    fpath = os.path.join(user_dir, fn)
+                    try:
+                        if os.path.exists(fpath):
+                            os.remove(fpath)
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+            # 3) Clear DB provider api_key values
+            try:
+                providers = self.db_manager.get_all_providers()
+                for p in providers:
+                    # set to empty string to avoid NULL constraint differences
+                    self.db_manager.update_provider_api_key(p['provider_name'], '')
+            except Exception:
+                pass
+
+            return True
+        except Exception:
+            return False
     
     def get_all_providers(self) -> Dict[str, Dict[str, Any]]:
         """

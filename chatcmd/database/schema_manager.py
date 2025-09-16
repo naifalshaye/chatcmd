@@ -32,6 +32,9 @@ class SchemaManager:
         platform_utils.set_secure_file_permissions(db_path)
         
         self._initialize_schema()
+        # Added: schema versioning and write maintenance
+        self._initialize_schema_versioning()
+        self._write_count = 0
     
     def _initialize_schema(self):
         """Initialize database schema with all required tables"""
@@ -41,6 +44,24 @@ class SchemaManager:
         self._create_history_table()
         self._create_config_table()
         self._migrate_existing_data()
+    
+    def _initialize_schema_versioning(self):
+        """Create schema versioning table and set initial version."""
+        try:
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS schema_version (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    version INTEGER NOT NULL
+                )
+            ''')
+            self.conn.commit()
+            self.cursor.execute('SELECT version FROM schema_version WHERE id = 1')
+            row = self.cursor.fetchone()
+            if not row:
+                self.cursor.execute('INSERT INTO schema_version (id, version) VALUES (1, 1)')
+                self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"Migration warning: {e}")
     
     def _create_ai_providers_table(self):
         """Create AI providers table"""
@@ -167,6 +188,7 @@ class SchemaManager:
                 VALUES (?, ?, ?)
             ''', (provider_name, api_key, base_url))
             self.conn.commit()
+            self._post_write_maintenance()
             return self.cursor.lastrowid
         except sqlite3.Error as e:
             print(f"Error adding provider: {e}")
@@ -245,6 +267,7 @@ class SchemaManager:
                 WHERE provider_name = ?
             ''', (api_key, provider_name))
             self.conn.commit()
+            self._post_write_maintenance()
             return self.cursor.rowcount > 0
         except sqlite3.Error as e:
             print(f"Error updating provider API key: {e}")
@@ -327,6 +350,7 @@ class SchemaManager:
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', (provider_id, model_name, tokens_used, cost, response_time, success))
             self.conn.commit()
+            self._post_write_maintenance()
         except sqlite3.Error as e:
             print(f"Error adding usage stat: {e}")
     
@@ -363,6 +387,19 @@ class SchemaManager:
         except sqlite3.Error as e:
             print(f"Error getting usage stats: {e}")
             return []
+    
+    def _post_write_maintenance(self):
+        """Run periodic VACUUM/ANALYZE after N writes to keep SQLite healthy."""
+        try:
+            self._write_count += 1
+            threshold = 50
+            if self._write_count >= threshold:
+                self.cursor.execute('ANALYZE;')
+                self.cursor.execute('VACUUM;')
+                self.conn.commit()
+                self._write_count = 0
+        except sqlite3.Error:
+            pass
     
     def close(self):
         """Close database connection"""

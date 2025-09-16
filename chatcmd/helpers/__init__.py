@@ -4,6 +4,8 @@ import subprocess
 import requests
 import importlib.metadata
 import platform
+import os
+import time
 try:
     import pyperclip
 except Exception:
@@ -76,6 +78,25 @@ class Helpers:
         colored_print("----------------------------------------------------------------", Colors.GOLD)
 
     @staticmethod
+    def print_error(message: str, remediation: str = None):
+        """Print a standardized error with optional remediation step."""
+        from chatcmd import Colors, colored_print
+        if os.environ.get('CHATCMD_JSON') == '1':
+            import json
+            out = {"type": "error", "message": message}
+            if remediation:
+                out["action"] = remediation
+            print(json.dumps(out))
+            return
+        colored_print(f"Error: {message}", Colors.RED, bold=True)
+        if remediation:
+            colored_print(f"Action: {remediation}", Colors.YELLOW)
+
+    @staticmethod
+    def json_mode() -> bool:
+        return os.environ.get('CHATCMD_JSON') == '1'
+
+    @staticmethod
     def copy_to_clipboard(text):
         try:
             system = platform.system()
@@ -85,14 +106,15 @@ class Helpers:
                     pyperclip.copy(text)
                     return
                 except Exception:
-                    pass
+                    # Fall through to OS-specific helpers
+                    ...
             # Native fallbacks per OS
             if system == "Darwin":
                 try:
                     subprocess.run(['pbcopy'], input=text, encoding='utf-8', check=True)
                     return
                 except Exception:
-                    pass
+                    print("Tip: On macOS, ensure 'pbcopy' is available (Xcode command line tools).")
             elif system == "Linux":
                 # Try xclip, then xsel
                 for cmd in (['xclip', '-selection', 'clipboard'], ['xsel', '--clipboard', '--input']):
@@ -101,12 +123,13 @@ class Helpers:
                         return
                     except Exception:
                         continue
+                print("Tip: On Linux, install xclip or xsel for clipboard support: sudo apt-get install xclip")
             elif system == "Windows":
                 try:
                     subprocess.run(['clip'], input=text, encoding='utf-8', check=True)
                     return
                 except Exception:
-                    pass
+                    print("Tip: On Windows, 'clip' should be available in standard shells.")
             # If all fallbacks fail
             print(f"Failed to copy to clipboard. Use --no-copy to disable auto copy.")
         except Exception:

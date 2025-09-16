@@ -4,6 +4,8 @@ import pyperclip
 import string
 import secrets
 from .developer_tools import DeveloperTools
+import os
+import time
 
 
 class Features:
@@ -54,23 +56,28 @@ class Features:
     @staticmethod
     def get_public_ip_address():
         from chatcmd import Colors, colored_print
-        
-        try:
-            # Use a reliable service to get your public IP address
-            response = requests.get("https://api.ipify.org?format=json")
-
-            # Check if the request was successful (status code 200)
-            if response.status_code == 200:
-                # Parse the JSON response to extract the IP address
-                ip_data = response.json()
-                public_ip = ip_data["ip"]
-                colored_print(public_ip, Colors.BRIGHT_GREEN, bold=True)
-                pyperclip.copy(public_ip)
-
-            else:
-                colored_print("Unable to retrieve public IP address, please try again.", Colors.RED)
-        except requests.RequestException as e:
-            colored_print(f"An error occurred: {e}", Colors.RED)
+        attempts = int(os.environ.get('CHATCMD_RETRY_ATTEMPTS', '2'))
+        backoff = float(os.environ.get('CHATCMD_RETRY_BACKOFF', '0.5'))
+        last_err = None
+        for i in range(max(1, attempts)):
+            try:
+                response = requests.get("https://api.ipify.org?format=json", timeout=3)
+                if response.status_code == 200:
+                    ip_data = response.json()
+                    public_ip = ip_data.get("ip", "")
+                    if public_ip:
+                        colored_print(public_ip, Colors.BRIGHT_GREEN, bold=True)
+                        try:
+                            pyperclip.copy(public_ip)
+                        except Exception:
+                            pass
+                        return
+                last_err = Exception(f"HTTP {response.status_code}")
+            except requests.RequestException as e:
+                last_err = e
+            time.sleep(backoff * (2 ** i))
+        from chatcmd.helpers import Helpers
+        Helpers.print_error("Unable to retrieve public IP address.", "Check your network connection and try again.")
 
     @staticmethod
     def generate_random_password(length=18):

@@ -5,6 +5,7 @@ Handles AI model selection and settings
 
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+import difflib
 
 
 @dataclass
@@ -220,6 +221,12 @@ class ModelConfig:
             self.current_model = normalized
             return True
         return False
+
+    def suggest_model(self, model_name: str) -> Optional[str]:
+        """Suggest closest valid model for an unknown name."""
+        choices = list(self.SUPPORTED_MODELS.keys()) + list(self.ALIASES.keys())
+        matches = difflib.get_close_matches(model_name, choices, n=1, cutoff=0.6)
+        return matches[0] if matches else None
     
     def get_current_model(self) -> str:
         """Get the current model name"""
