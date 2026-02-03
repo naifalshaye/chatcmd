@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 setup(
     name="chatcmd",
-    version="2.0.1",
+    version="2.2.0",
     description="Open-source AI CLI for command lookup, SQL generation, and developer tools with multi-model support (OpenAI, Anthropic, Google, Cohere, Ollama).",
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -16,7 +16,7 @@ setup(
         "docopt>=0.6.2,<0.7.0",
         "openai>=1.0.0,<2.0.0",
         "anthropic>=0.7.0,<1.0.0",
-        "google-generativeai>=0.3.0,<1.0.0",
+        "google-genai>=1.0.0",
         "cohere>=4.0.0,<5.0.0",
         "pyperclip>=1.8.2,<2.0.0",
         "requests>=2.31.0,<3.0.0",

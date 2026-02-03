@@ -60,12 +60,13 @@ class OpenAIProvider(BaseAIProvider):
             
         except Exception as e:
             error_info = self._parse_api_error(e)
+            # Sanitize error output to avoid leaking sensitive information
+            safe_message = self._sanitize_error_message(error_info['message'])
             print(f"OpenAI API Error:")
             print(f"  Code: {error_info['code']}")
-            print(f"  Type: {error_info['type']}")
-            print(f"  Message: {error_info['message']}")
+            print(f"  Message: {safe_message}")
             return None
-    
+
     def generate_sql_query(self, prompt: str) -> Optional[str]:
         """
         Generate a SQL query using OpenAI models
@@ -105,12 +106,13 @@ class OpenAIProvider(BaseAIProvider):
             
         except Exception as e:
             error_info = self._parse_api_error(e)
+            # Sanitize error output to avoid leaking sensitive information
+            safe_message = self._sanitize_error_message(error_info['message'])
             print(f"OpenAI API Error:")
             print(f"  Code: {error_info['code']}")
-            print(f"  Type: {error_info['type']}")
-            print(f"  Message: {error_info['message']}")
+            print(f"  Message: {safe_message}")
             return None
-    
+
     def _extract_sql_from_response(self, response: str) -> Optional[str]:
         """Extract SQL query from response that might contain extra text"""
         lines = response.split('\n')
@@ -285,3 +287,30 @@ class OpenAIProvider(BaseAIProvider):
                 'type': 'parsing_error',
                 'message': str(error)
             }
+
+    def _sanitize_error_message(self, message: str) -> str:
+        """
+        Sanitize error message to remove sensitive information
+
+        Args:
+            message: Raw error message
+
+        Returns:
+            Sanitized message safe for display
+        """
+        import re
+
+        # Remove any API keys that might be in the message
+        sanitized = re.sub(r'sk-[a-zA-Z0-9_-]+', '[REDACTED_KEY]', message)
+
+        # Remove any URLs with potential tokens/keys
+        sanitized = re.sub(r'https?://[^\s]*[?&](?:key|token|api_key)=[^\s&]*', '[REDACTED_URL]', sanitized)
+
+        # Remove file paths that might expose system info
+        sanitized = re.sub(r'/(?:home|Users)/[^\s]+', '[REDACTED_PATH]', sanitized)
+        sanitized = re.sub(r'C:\\Users\\[^\s]+', '[REDACTED_PATH]', sanitized)
+
+        # Remove email addresses
+        sanitized = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[REDACTED_EMAIL]', sanitized)
+
+        return sanitized

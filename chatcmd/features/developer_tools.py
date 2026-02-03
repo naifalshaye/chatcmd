@@ -5,19 +5,18 @@ Additional features useful for software engineers and developers
 
 import base64
 import uuid
+import random
 import re
 import datetime
-import requests
 import pyperclip
 from typing import Dict, List, Optional, Any
-from urllib.parse import quote
 
 
 class DeveloperTools:
     """Collection of developer-focused tools and utilities"""
-    
+
     def __init__(self):
-        self.qr_api_url = "https://api.qrserver.com/v1/create-qr-code/"
+        pass
     
     
     def generate_regex_pattern(self, description: str) -> str:
@@ -84,14 +83,16 @@ class DeveloperTools:
     def base64_encode_decode(self, text: str, operation: str = 'encode') -> str:
         """
         Encode or decode base64 strings
-        
+
         Args:
             text: Text to encode/decode
             operation: 'encode' or 'decode'
-            
+
         Returns:
             Encoded or decoded string
         """
+        from chatcmd import Colors, colored_print
+
         colored_print(f"""
         
          ######  ##     ##    ###    ########  ######  ##     ## ########
@@ -124,15 +125,17 @@ class DeveloperTools:
     def generate_uuid(self, version: int = 4) -> str:
         """
         Generate UUIDs in different formats
-        
+
         Args:
             version: UUID version (1, 3, 4, 5)
-            
+
         Returns:
             Generated UUID
         """
+        from chatcmd import Colors, colored_print
+
         colored_print(f"""
-        
+
          ######  ##     ##    ###    ########  ######  ##     ## ########
         ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
         ##       ##     ##  ##   ##     ##    ##       #### #### ##     ##
@@ -142,10 +145,15 @@ class DeveloperTools:
          ######  ##     ## ##     ##    ##     ######  ##     ## ########
                             Generate UUID v{version}
         """, Colors.BRIGHT_GREEN)
-        
+
         try:
             if version == 1:
-                uuid_value = str(uuid.uuid1())
+                # Security warning: UUID v1 contains MAC address
+                colored_print("Warning: UUID v1 contains your MAC address, which can be used to identify your device.", Colors.YELLOW)
+                colored_print("Consider using UUID v4 for privacy-sensitive applications.", Colors.YELLOW)
+                # Use random node to anonymize MAC address
+                random_node = random.getrandbits(48) | 0x010000000000  # Set multicast bit
+                uuid_value = str(uuid.uuid1(node=random_node))
             elif version == 3:
                 uuid_value = str(uuid.uuid3(uuid.NAMESPACE_DNS, 'example.com'))
             elif version == 4:
@@ -154,26 +162,28 @@ class DeveloperTools:
                 uuid_value = str(uuid.uuid5(uuid.NAMESPACE_DNS, 'example.com'))
             else:
                 uuid_value = str(uuid.uuid4())
-            
+
             colored_print(f"UUID v{version}: {uuid_value}", Colors.BRIGHT_GREEN, bold=True)
             pyperclip.copy(uuid_value)
             return uuid_value
-        except Exception as e:
-            error_msg = f"Error generating UUID: {e}"
+        except Exception:
+            error_msg = "Error generating UUID."
             print(error_msg)
             return error_msg
     
     def convert_timestamp(self, timestamp: str, format_type: str = 'unix') -> str:
         """
         Convert between different timestamp formats
-        
+
         Args:
             timestamp: Timestamp to convert
             format_type: Target format (unix, iso, readable)
-            
+
         Returns:
             Converted timestamp
         """
+        from chatcmd import Colors, colored_print
+
         colored_print(f"""
         
          ######  ##     ##    ###    ########  ######  ##     ## ########
@@ -212,44 +222,7 @@ class DeveloperTools:
             error_msg = f"Error converting timestamp: {e}"
             print(error_msg)
             return error_msg
-    
-    def generate_qr_code(self, text: str) -> str:
-        """
-        Generate QR code for text/URL
-        
-        Args:
-            text: Text or URL to encode in QR code
-            
-        Returns:
-            QR code URL
-        """
-        colored_print("""
-        
-         ######  ##     ##    ###    ########  ######  ##     ## ########
-        ##    ## ##     ##   ## ##      ##    ##    ## ###   ### ##     ##
-        ##       ##     ##  ##   ##     ##    ##       #### #### ##     ##
-        ##       ######### ##     ##    ##    ##       ## ### ## ##     ##
-        ##       ##     ## #########    ##    ##       ##     ## ##     ##
-        ##    ## ##     ## ##     ##    ##    ##    ## ##     ## ##     ##
-         ######  ##     ## ##     ##    ##     ######  ##     ## ########
-                            QR Code Generator
-        """, Colors.BRIGHT_GREEN)
-        
-        try:
-            # URL encode the text
-            encoded_text = quote(text)
-            qr_url = f"{self.qr_api_url}?size=200x200&data={encoded_text}"
-            
-            colored_print(f"QR Code URL: {qr_url}", Colors.BRIGHT_GREEN, bold=True)
-            colored_print(f"Text: {text}", Colors.CYAN)
-            pyperclip.copy(qr_url)
-            return qr_url
-        except Exception as e:
-            error_msg = f"Error generating QR code: {e}"
-            print(error_msg)
-            return error_msg
-    
-    
+
 
 
 # Create instance

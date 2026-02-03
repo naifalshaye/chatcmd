@@ -4,8 +4,10 @@ Falls back to encrypted local storage if keyring is unavailable
 """
 
 import os
+import stat
 import base64
 import json
+import tempfile
 from pathlib import Path
 from typing import Optional, Dict, Any
 from cryptography.fernet import Fernet
@@ -17,35 +19,117 @@ try:
 except ImportError:
     KEYRING_AVAILABLE = False
 
+# Keyring service name for storing encryption key
+ENCRYPTION_KEY_SERVICE = "chatcmd_encryption"
+ENCRYPTION_KEY_USERNAME = "encryption_key"
+
 
 class SecureStorage:
     """Secure storage for API keys with cross-platform support"""
-    
+
     SERVICE_NAME = "chatcmd"
-    
+
     def __init__(self):
-        self.keyring_available = KEYRING_AVAILABLE
+        self.keyring_available = KEYRING_AVAILABLE and self._test_keyring()
         self.encryption_key = self._get_or_create_encryption_key()
-    
-    def _get_or_create_encryption_key(self) -> Optional[bytes]:
-        """Get or create encryption key for local storage fallback"""
+
+    def _test_keyring(self) -> bool:
+        """Test if keyring is actually functional"""
         try:
+            # Try a simple keyring operation to verify it works
+            keyring.get_password(self.SERVICE_NAME, "__test_keyring__")
+            return True
+        except Exception:
+            return False
+
+    def _get_or_create_encryption_key(self) -> Optional[bytes]:
+        """
+        Get or create encryption key.
+        Priority: 1) Keyring, 2) Encrypted file with permission checks
+        """
+        try:
+            # Try to get key from keyring first (most secure)
+            if self.keyring_available:
+                stored_key = keyring.get_password(ENCRYPTION_KEY_SERVICE, ENCRYPTION_KEY_USERNAME)
+                if stored_key:
+                    return stored_key.encode()
+
+                # Generate new key and store in keyring
+                key = Fernet.generate_key()
+                keyring.set_password(ENCRYPTION_KEY_SERVICE, ENCRYPTION_KEY_USERNAME, key.decode())
+                return key
+
+            # Fallback to file-based key with security checks
             key_file = os.path.join(platform_utils.get_user_data_dir(), '.encryption_key')
-            
+
             if os.path.exists(key_file):
+                # Verify file permissions before reading
+                if not self._verify_file_permissions(key_file):
+                    print("Warning: Encryption key file has insecure permissions. Refusing to read.")
+                    return None
+
                 with open(key_file, 'rb') as f:
                     return f.read()
             else:
-                # Generate new key
+                # Generate new key with atomic write
                 key = Fernet.generate_key()
-                os.makedirs(os.path.dirname(key_file), exist_ok=True)
-                with open(key_file, 'wb') as f:
-                    f.write(key)
-                # Set secure permissions
-                platform_utils.set_secure_file_permissions(key_file)
+                self._atomic_write_file(key_file, key)
                 return key
         except Exception:
             return None
+
+    def _verify_file_permissions(self, file_path: str) -> bool:
+        """Verify file has secure permissions (owner-only read/write)"""
+        try:
+            if os.name == 'nt':  # Windows
+                return True  # Windows uses ACLs, skip check
+
+            file_stat = os.stat(file_path)
+            mode = file_stat.st_mode
+
+            # Check if group or others have any permissions
+            if mode & (stat.S_IRWXG | stat.S_IRWXO):
+                return False
+
+            # Verify owner matches current user
+            if file_stat.st_uid != os.getuid():
+                return False
+
+            return True
+        except Exception:
+            return False
+
+    def _atomic_write_file(self, file_path: str, content: bytes) -> bool:
+        """Write file atomically using temp file + rename"""
+        try:
+            dir_path = os.path.dirname(file_path)
+            os.makedirs(dir_path, mode=0o700, exist_ok=True)
+
+            # Write to temp file first
+            fd, temp_path = tempfile.mkstemp(dir=dir_path)
+            try:
+                os.write(fd, content)
+                os.close(fd)
+
+                # Set secure permissions on temp file
+                os.chmod(temp_path, 0o600)
+
+                # Atomic rename
+                os.replace(temp_path, file_path)
+                return True
+            except Exception:
+                # Clean up temp file on failure
+                try:
+                    os.close(fd)
+                except Exception:
+                    pass
+                try:
+                    os.unlink(temp_path)
+                except Exception:
+                    pass
+                raise
+        except Exception:
+            return False
     
     def store_api_key(self, provider: str, api_key: str) -> bool:
         """
@@ -108,34 +192,34 @@ class SecureStorage:
             return False
     
     def _store_encrypted_key(self, provider: str, api_key: str) -> bool:
-        """Store API key in encrypted local file"""
+        """Store API key in encrypted local file with atomic write"""
         try:
             if not self.encryption_key:
                 return False
-            
+
             fernet = Fernet(self.encryption_key)
             encrypted_key = fernet.encrypt(api_key.encode())
-            
+
             keys_file = os.path.join(platform_utils.get_user_data_dir(), 'api_keys.enc')
             keys_data = {}
-            
-            # Load existing keys
+
+            # Load existing keys with permission check
             if os.path.exists(keys_file):
+                if not self._verify_file_permissions(keys_file):
+                    print("Warning: API keys file has insecure permissions.")
+                    return False
+
                 with open(keys_file, 'rb') as f:
                     encrypted_data = f.read()
                 decrypted_data = fernet.decrypt(encrypted_data)
                 keys_data = json.loads(decrypted_data.decode())
-            
+
             # Add new key
             keys_data[provider] = base64.b64encode(encrypted_key).decode()
-            
-            # Save encrypted keys
+
+            # Save encrypted keys atomically
             encrypted_data = fernet.encrypt(json.dumps(keys_data).encode())
-            with open(keys_file, 'wb') as f:
-                f.write(encrypted_data)
-            
-            platform_utils.set_secure_file_permissions(keys_file)
-            return True
+            return self._atomic_write_file(keys_file, encrypted_data)
         except Exception:
             return False
     
@@ -144,23 +228,28 @@ class SecureStorage:
         try:
             if not self.encryption_key:
                 return None
-            
+
             keys_file = os.path.join(platform_utils.get_user_data_dir(), 'api_keys.enc')
             if not os.path.exists(keys_file):
                 return None
-            
+
+            # Verify file permissions before reading
+            if not self._verify_file_permissions(keys_file):
+                print("Warning: API keys file has insecure permissions. Refusing to read.")
+                return None
+
             fernet = Fernet(self.encryption_key)
-            
+
             with open(keys_file, 'rb') as f:
                 encrypted_data = f.read()
-            
+
             decrypted_data = fernet.decrypt(encrypted_data)
             keys_data = json.loads(decrypted_data.decode())
-            
+
             if provider in keys_data:
                 encrypted_key = base64.b64decode(keys_data[provider])
                 return fernet.decrypt(encrypted_key).decode()
-            
+
             return None
         except Exception:
             return None
@@ -170,31 +259,35 @@ class SecureStorage:
         try:
             if not self.encryption_key:
                 return False
-            
+
             keys_file = os.path.join(platform_utils.get_user_data_dir(), 'api_keys.enc')
             if not os.path.exists(keys_file):
                 return True
-            
+
+            # Verify file permissions before modifying
+            if not self._verify_file_permissions(keys_file):
+                print("Warning: API keys file has insecure permissions.")
+                return False
+
             fernet = Fernet(self.encryption_key)
-            
+
             with open(keys_file, 'rb') as f:
                 encrypted_data = f.read()
-            
+
             decrypted_data = fernet.decrypt(encrypted_data)
             keys_data = json.loads(decrypted_data.decode())
-            
+
             if provider in keys_data:
                 del keys_data[provider]
-                
+
                 if keys_data:
-                    # Save remaining keys
+                    # Save remaining keys atomically
                     encrypted_data = fernet.encrypt(json.dumps(keys_data).encode())
-                    with open(keys_file, 'wb') as f:
-                        f.write(encrypted_data)
+                    return self._atomic_write_file(keys_file, encrypted_data)
                 else:
                     # No keys left, delete file
                     os.remove(keys_file)
-            
+
             return True
         except Exception:
             return False

@@ -113,43 +113,55 @@ class EnhancedLookup:
         if command is not None:
             # Track usage statistics
             self._track_usage(provider_info['id'], selected_model, response_time, True)
-            
-            # Copy to clipboard if enabled
+
+            # Clean and validate command BEFORE clipboard copy
+            command = helpers.clear_input(command)
+
+            # Comprehensive dangerous token detection including unicode variants
+            dangerous_tokens = [
+                ';', '&&', '||', '|', '>', '>>', '2>', '2>>',
+                '`', '$(', '${',          # Command substitution
+                '\x00', '\r',             # Null byte and carriage return injection
+                '<<',                      # Here-doc
+                '\uff1b', '\uff06',        # Unicode variants of ; and &
+            ]
+
+            # Reject multi-line commands
+            if '\n' in command:
+                print('Error: Multi-line commands are disabled.')
+                return
+
+            # Reject dangerous tokens
+            for tok in dangerous_tokens:
+                if tok in command:
+                    print('Error: Potentially dangerous command detected. Please refine your request.')
+                    return
+
+            # Check for invalid responses
+            if self._is_invalid_response(command):
+                print('No command found for this request!')
+                return
+
+            # Copy to clipboard ONLY AFTER validation passes
             if not no_copy:
                 if platform.system() == "Linux":
                     helpers.copy_to_clipboard(command)
                 else:
                     pyperclip.copy(command)
-            
-            # Clean and validate command
-            command = helpers.clear_input(command)
-            # Hardened sanitization: reject multi-line and dangerous operators unless explicitly enabled
-            dangerous_tokens = [';', '&&', '||', '|', '>', '>>', '2>', '2>>']
-            if '\n' in command:
-                print('Error: Multi-line commands are disabled. Enable raw mode to allow.')
-                return
-            if any(tok in command for tok in dangerous_tokens):
-                print('Error: Potentially dangerous command detected. Please refine your request.')
-                return
-            
-            # Check for invalid responses
-            if self._is_invalid_response(command):
-                print('No command found for this request!')
-                return
-            
+
             # Add to history
             history = cmd.add_cmd(
-                self.db_manager.conn, 
-                self.db_manager.cursor, 
-                prompt, 
+                self.db_manager.conn,
+                self.db_manager.cursor,
+                prompt,
                 command.strip(),
                 model_name=selected_model,
                 provider_name=selected_provider
             )
-            
+
             if not history:
                 print("Error: Failed to add command to history")
-            
+
             colored_print(" " + command.strip(), Colors.BRIGHT_GREEN, bold=True)
             print('')
         else:
@@ -356,41 +368,42 @@ class EnhancedLookup:
         if sql_query is not None:
             # Track usage statistics
             self._track_usage(provider_info['id'], selected_model, response_time, True)
-            
-            # Copy to clipboard if enabled
-            if not no_copy:
-                if platform.system() == "Linux":
-                    helpers.copy_to_clipboard(sql_query)
-                else:
-                    pyperclip.copy(sql_query)
-            
-            # Clean and validate SQL query
+
+            # Clean and validate SQL query BEFORE clipboard copy
             sql_query = helpers.clear_input(sql_query)
+
             # Harden SQL: reject DDL/DML unless user requested explicitly in prompt
             upper_query = sql_query.strip().upper()
             forbidden_sql = ['DROP ', 'TRUNCATE ', 'ALTER ', 'DELETE ', 'UPDATE ']
             if any(keyword in upper_query for keyword in forbidden_sql) and 'SELECT' not in upper_query:
                 print('Error: Destructive SQL is blocked. Ask explicitly with clear intent to proceed.')
                 return
-            
+
             # Check for invalid responses
             if self._is_invalid_sql_response(sql_query):
                 print('No SQL query found for this request!')
                 return
-            
+
+            # Copy to clipboard ONLY AFTER validation passes
+            if not no_copy:
+                if platform.system() == "Linux":
+                    helpers.copy_to_clipboard(sql_query)
+                else:
+                    pyperclip.copy(sql_query)
+
             # Add to history
             history = cmd.add_cmd(
-                self.db_manager.conn, 
-                self.db_manager.cursor, 
-                prompt, 
+                self.db_manager.conn,
+                self.db_manager.cursor,
+                prompt,
                 sql_query.strip(),
                 model_name=selected_model,
                 provider_name=selected_provider
             )
-            
+
             if not history:
                 print("Error: Failed to add SQL query to history")
-            
+
             colored_print(" " + sql_query.strip(), Colors.BRIGHT_GREEN, bold=True)
             print('')
         else:
@@ -455,6 +468,8 @@ class EnhancedLookup:
 
     def port_lookup(self):
         """Lookup a port using the currently selected model/provider"""
+        from chatcmd import Colors, colored_print
+
         # Get current model configuration
         current_config = self.db_manager.get_current_model()
         selected_model = current_config['current_model']
@@ -510,6 +525,8 @@ class EnhancedLookup:
 
     def color_code(self):
         """Get color HEX code using the currently selected model/provider"""
+        from chatcmd import Colors, colored_print
+
         # Get current model configuration
         current_config = self.db_manager.get_current_model()
         selected_model = current_config['current_model']

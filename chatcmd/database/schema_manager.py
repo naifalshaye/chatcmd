@@ -35,6 +35,8 @@ class SchemaManager:
         # Added: schema versioning and write maintenance
         self._initialize_schema_versioning()
         self._write_count = 0
+        # Run optional integrity check on startup
+        self._check_database_integrity()
     
     def _initialize_schema(self):
         """Initialize database schema with all required tables"""
@@ -60,8 +62,8 @@ class SchemaManager:
             if not row:
                 self.cursor.execute('INSERT INTO schema_version (id, version) VALUES (1, 1)')
                 self.conn.commit()
-        except sqlite3.Error as e:
-            print(f"Migration warning: {e}")
+        except sqlite3.Error:
+            pass  # Silent migration warning
     
     def _create_ai_providers_table(self):
         """Create AI providers table"""
@@ -167,31 +169,34 @@ class SchemaManager:
                         ''')
                         self.conn.commit()
                         
-        except sqlite3.Error as e:
-            print(f"Migration warning: {e}")
+        except sqlite3.Error:
+            pass  # Silent migration warning
     
-    def add_provider(self, provider_name: str, api_key: str, base_url: str = None) -> int:
+    def add_provider(self, provider_name: str, api_key: str = None, base_url: str = None) -> int:
         """
         Add a new AI provider
-        
+
         Args:
             provider_name: Name of the provider (openai, anthropic, etc.)
-            api_key: API key for the provider
+            api_key: API key indicator (not stored in plaintext, only marker)
             base_url: Base URL for the provider (optional)
-            
+
         Returns:
             Provider ID
         """
         try:
+            # Store only a marker indicating key is configured, not the actual key
+            # Actual keys are stored in secure_storage (keyring or encrypted file)
+            key_marker = "[SECURE]" if api_key else None
             self.cursor.execute('''
                 INSERT OR REPLACE INTO ai_providers (provider_name, api_key, base_url)
                 VALUES (?, ?, ?)
-            ''', (provider_name, api_key, base_url))
+            ''', (provider_name, key_marker, base_url))
             self.conn.commit()
             self._post_write_maintenance()
             return self.cursor.lastrowid
-        except sqlite3.Error as e:
-            print(f"Error adding provider: {e}")
+        except sqlite3.Error:
+            print("Error adding provider.")
             return None
     
     def get_provider(self, provider_name: str) -> Optional[Dict[str, Any]]:
@@ -220,8 +225,8 @@ class SchemaManager:
                     'is_active': bool(result[4])
                 }
             return None
-        except sqlite3.Error as e:
-            print(f"Error getting provider: {e}")
+        except sqlite3.Error:
+            print("Error getting provider information.")
             return None
     
     def get_all_providers(self) -> List[Dict[str, Any]]:
@@ -245,32 +250,34 @@ class SchemaManager:
                 'base_url': row[3],
                 'is_active': bool(row[4])
             } for row in results]
-        except sqlite3.Error as e:
-            print(f"Error getting providers: {e}")
+        except sqlite3.Error:
+            print("Error getting providers.")
             return []
     
     def update_provider_api_key(self, provider_name: str, api_key: str) -> bool:
         """
-        Update provider API key
-        
+        Update provider API key marker
+
         Args:
             provider_name: Name of the provider
-            api_key: New API key
-            
+            api_key: New API key (stored only as marker, actual key in secure storage)
+
         Returns:
             True if successful, False otherwise
         """
         try:
+            # Store only a marker indicating key is configured
+            key_marker = "[SECURE]" if api_key else None
             self.cursor.execute('''
-                UPDATE ai_providers 
+                UPDATE ai_providers
                 SET api_key = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE provider_name = ?
-            ''', (api_key, provider_name))
+            ''', (key_marker, provider_name))
             self.conn.commit()
             self._post_write_maintenance()
             return self.cursor.rowcount > 0
-        except sqlite3.Error as e:
-            print(f"Error updating provider API key: {e}")
+        except sqlite3.Error:
+            print("Error updating provider API key.")
             return False
     
     def set_current_model(self, model_name: str, provider_name: str) -> bool:
@@ -291,8 +298,8 @@ class SchemaManager:
             ''', (model_name, provider_name))
             self.conn.commit()
             return True
-        except sqlite3.Error as e:
-            print(f"Error setting current model: {e}")
+        except sqlite3.Error:
+            print("Error setting current model.")
             return False
     
     def get_current_model(self) -> Dict[str, str]:
@@ -324,8 +331,8 @@ class SchemaManager:
                     'current_model': 'gpt-3.5-turbo',
                     'current_provider': 'openai'
                 }
-        except sqlite3.Error as e:
-            print(f"Error getting current model: {e}")
+        except sqlite3.Error:
+            print("Error getting current model.")
             return {
                 'current_model': 'gpt-3.5-turbo',
                 'current_provider': 'openai'
@@ -351,28 +358,30 @@ class SchemaManager:
             ''', (provider_id, model_name, tokens_used, cost, response_time, success))
             self.conn.commit()
             self._post_write_maintenance()
-        except sqlite3.Error as e:
-            print(f"Error adding usage stat: {e}")
+        except sqlite3.Error:
+            print("Error adding usage statistics.")
     
     def get_usage_stats(self, days: int = 30) -> List[Dict[str, Any]]:
         """
         Get usage statistics for the last N days
-        
+
         Args:
             days: Number of days to look back
-            
+
         Returns:
             List of usage statistics
         """
         try:
+            # Validate days parameter to prevent injection
+            days = max(1, min(int(days), 365))
             self.cursor.execute('''
-                SELECT p.provider_name, us.model_name, us.tokens_used, us.cost, 
+                SELECT p.provider_name, us.model_name, us.tokens_used, us.cost,
                        us.response_time, us.success, us.created_at
                 FROM usage_stats us
                 JOIN ai_providers p ON us.provider_id = p.id
-                WHERE us.created_at >= datetime('now', '-{} days')
+                WHERE us.created_at >= datetime('now', ? || ' days')
                 ORDER BY us.created_at DESC
-            '''.format(days))
+            ''', (f'-{days}',))
             
             results = self.cursor.fetchall()
             return [{
@@ -384,10 +393,30 @@ class SchemaManager:
                 'success': bool(row[5]),
                 'created_at': row[6]
             } for row in results]
-        except sqlite3.Error as e:
-            print(f"Error getting usage stats: {e}")
+        except sqlite3.Error:
+            print("Error getting usage statistics.")
             return []
     
+    def _check_database_integrity(self) -> bool:
+        """
+        Check database integrity on startup.
+        Uses SQLite's PRAGMA integrity_check.
+
+        Returns:
+            True if database is healthy, False if corruption detected
+        """
+        try:
+            self.cursor.execute('PRAGMA integrity_check')
+            result = self.cursor.fetchone()
+            if result and result[0] == 'ok':
+                return True
+            else:
+                print("Warning: Database integrity check failed. Consider backing up and resetting.")
+                return False
+        except sqlite3.Error:
+            print("Warning: Could not perform database integrity check.")
+            return False
+
     def _post_write_maintenance(self):
         """Run periodic VACUUM/ANALYZE after N writes to keep SQLite healthy."""
         try:

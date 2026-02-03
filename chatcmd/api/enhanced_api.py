@@ -71,31 +71,33 @@ class EnhancedAPI:
     def set_provider_api_key(self, provider_name: str, api_key: str) -> bool:
         """
         Set API key for a specific provider in secure storage
-        
+
         Args:
             provider_name: Name of the provider
             api_key: API key to set
-            
+
         Returns:
             True if successful, False otherwise
         """
         try:
-            # Store in secure storage first
+            # Store in secure storage (keyring or encrypted file)
             if secure_storage.is_available():
                 if not secure_storage.store_api_key(provider_name, api_key):
                     print(f"Warning: Could not store API key in secure storage for {provider_name}")
-            
-            # Also store in database for backward compatibility
+                    return False
+            else:
+                print("Warning: Secure storage not available. API key not saved.")
+                return False
+
+            # Update database with marker only (not plaintext key)
             existing_provider = self.db_manager.get_provider(provider_name)
             if existing_provider:
-                # Update existing provider
-                return self.db_manager.update_provider_api_key(provider_name, api_key)
+                saved = self.db_manager.update_provider_api_key(provider_name, api_key)
             else:
-                # Add new provider
                 provider_id = self.db_manager.add_provider(provider_name, api_key)
                 saved = provider_id is not None
 
-            # Also persist to config file for non-interactive usage
+            # Update config.json with marker only (not plaintext key)
             try:
                 Path(os.path.dirname(self.config_path)).mkdir(parents=True, exist_ok=True)
                 config: Dict[str, Any] = {}
@@ -103,15 +105,19 @@ class EnhancedAPI:
                     with open(self.config_path, 'r', encoding='utf-8') as f:
                         config = json.load(f) or {}
                 providers = config.setdefault('providers', {})
-                providers.setdefault(provider_name, {})['api_key'] = api_key
+                # Store only a configured marker, not the actual key
+                providers.setdefault(provider_name, {})['api_key_configured'] = True
+                # Remove any existing plaintext key from config
+                if 'api_key' in providers.get(provider_name, {}):
+                    del providers[provider_name]['api_key']
                 with open(self.config_path, 'w', encoding='utf-8') as f:
                     json.dump(config, f, indent=2)
             except Exception:
                 pass
 
             return saved
-        except Exception as e:
-            print(f"Error setting API key for {provider_name}: {e}")
+        except Exception:
+            print(f"Error setting API key for {provider_name}.")
             return False
     
     def validate_provider_api_key(self, provider_name: str, api_key: str) -> bool:

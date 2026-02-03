@@ -9,7 +9,7 @@ class CMD:
     def add_cmd(conn, cursor, prompt, command, model_name=None, provider_name=None):
         try:
             cursor.execute("INSERT INTO history (prompt,command,model_name,provider_name,created_at) VALUES(?,?,?,?,?)",
-                           (prompt, command, model_name, provider_name, datetime.datetime.now()))
+                           (prompt, command, model_name, provider_name, datetime.datetime.now().isoformat()))
             conn.commit()
 
             return True
@@ -123,7 +123,7 @@ class CMD:
     @staticmethod
     def delete_last_num_cmd(conn, cursor, number):
         from chatcmd import Colors, colored_print
-        
+
         try:
             cursor.execute('SELECT COUNT(*) FROM history')
             count = cursor.fetchone()[0]
@@ -131,22 +131,25 @@ class CMD:
             if count == 0:
                 colored_print('History is empty.', Colors.YELLOW)
             else:
-                number = int(number)
-                if number < 1:
-                    colored_print('Please enter a correct number.', Colors.RED)
-                else:
-                    select_query = f"SELECT * FROM history ORDER BY id DESC LIMIT {number}"
-                    cursor.execute(select_query)
-                    latest_records = cursor.fetchall()
+                # Validate and sanitize number parameter
+                try:
+                    number = max(1, min(int(number), 10000))
+                except (ValueError, TypeError):
+                    colored_print('Please enter a valid number.', Colors.RED)
+                    return
 
-                    if latest_records:
-                        record_ids = [record[0] for record in latest_records]
-                        delete_query = f"DELETE FROM history WHERE id IN ({','.join(['?'] * len(record_ids))})"
-                        cursor.execute(delete_query, record_ids)
-                        conn.commit()
-                        colored_print("Commands deleted successfully.", Colors.GREEN, bold=True)
-        except sqlite3.Error as e:
-            colored_print(f"Error 1016: Failed to get last command from history: {e}", Colors.RED, bold=True)
+                # Use parameterized query for LIMIT
+                cursor.execute("SELECT id FROM history ORDER BY id DESC LIMIT ?", (number,))
+                latest_records = cursor.fetchall()
+
+                if latest_records:
+                    record_ids = [record[0] for record in latest_records]
+                    placeholders = ','.join(['?'] * len(record_ids))
+                    cursor.execute(f"DELETE FROM history WHERE id IN ({placeholders})", record_ids)
+                    conn.commit()
+                    colored_print("Commands deleted successfully.", Colors.GREEN, bold=True)
+        except sqlite3.Error:
+            colored_print("Error 1016: Failed to delete commands from history.", Colors.RED, bold=True)
 
 
 commands = CMD()

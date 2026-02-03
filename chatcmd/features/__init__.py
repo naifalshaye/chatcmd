@@ -180,8 +180,4 @@ class Features:
     def convert_timestamp(self, timestamp: str, format_type: str = 'unix'):
         """Convert between different timestamp formats"""
         return self.dev_tools.convert_timestamp(timestamp, format_type)
-    
-    def generate_qr_code(self, text: str):
-        """Generate QR code for text/URL"""
-        return self.dev_tools.generate_qr_code(text)
 

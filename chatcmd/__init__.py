@@ -31,7 +31,6 @@ Tools:
   --base64-decode                   decode base64 text.
   --generate-uuid <version>         generate UUID (1, 3, 4, 5).
   --timestamp-convert <format>      convert timestamp (unix, iso, readable).
-  --qr-code                         generate QR code for text/URL.
 
 Library Options:
   -k, --set-key                     set or update API key (legacy OpenAI only).
@@ -185,9 +184,6 @@ def print_colored_usage():
     colored_print("  ", Colors.WHITE, end="")
     colored_print("--timestamp-convert <format>", Colors.GREEN, end="")
     colored_print("      convert timestamp (unix, iso, readable).", Colors.WHITE)
-    colored_print("  ", Colors.WHITE, end="")
-    colored_print("--qr-code", Colors.GREEN, end="")
-    colored_print("                         generate QR code for text/URL.", Colors.WHITE)
     print()
     
     # Library Options
@@ -269,7 +265,7 @@ class ChatCMD:
                             '--lookup-http-code','--port-lookup','--set-key','--get-key','--get-cmd','--get-last',
                             '--delete-cmd','--delete-last-cmd','--cmd-total','--clear-history','--db-size','--no-copy',
                             '--version','--library-info','--regex-pattern','--base64-encode','--base64-decode',
-                            '--generate-uuid','--timestamp-convert','--qr-code','--model','--list-models','--model-info',
+                            '--generate-uuid','--timestamp-convert','--model','--list-models','--model-info',
                             '--set-model-key','--get-model-key','--current-model','--performance-stats']:
                     self.args.setdefault(key, False)
             elif len(sys.argv) == 2 and sys.argv[1] == '--random-password':
@@ -281,8 +277,8 @@ class ChatCMD:
                            '--get-cmd', '--get-last', '--delete-cmd', '--delete-last-cmd', 
                            '--cmd-total', '--clear-history', '--db-size', '--no-copy', 
                            '--help', '--version', '--library-info', '--regex-pattern', 
-                           '--base64-encode', '--base64-decode', '--generate-uuid', '--timestamp-convert', 
-                           '--qr-code', '--model', '--list-models', '--model-info', 
+                           '--base64-encode', '--base64-decode', '--generate-uuid', '--timestamp-convert',
+                           '--model', '--list-models', '--model-info', 
                            '--set-model-key', '--get-model-key', '--current-model', 
                            '--performance-stats']:
                     self.args[key] = False if key.startswith('--') and '=' not in key else None
@@ -510,9 +506,6 @@ class ChatCMD:
                 format_type = self.args['--timestamp-convert']
                 timestamp = input("Timestamp to convert: ")
                 features.convert_timestamp(timestamp, format_type)
-            elif self.args['--qr-code']:
-                text = input("Text/URL for QR code: ")
-                features.generate_qr_code(text)
             elif self.args['--version']:
                 version = importlib.metadata.version('chatcmd')
                 colored_print('ChatCMD ' + version, Colors.BRIGHT_GREEN, bold=True)
@@ -523,10 +516,11 @@ class ChatCMD:
 
         except KeyboardInterrupt:
             colored_print("\nOperation cancelled by user.", Colors.YELLOW, bold=True)
-        except requests.RequestException as e:
-            colored_print(f"Network error: {e}", Colors.RED, bold=True)
-        except Exception as e:
-            colored_print(f"Error 1001: {e}", Colors.RED, bold=True)
+        except requests.RequestException:
+            colored_print("Network error: Unable to connect. Please check your connection.", Colors.RED, bold=True)
+        except Exception:
+            # Generic error message to avoid exposing sensitive information
+            colored_print("Error 1001: An unexpected error occurred. Please try again.", Colors.RED, bold=True)
         finally:
             try:
                 if hasattr(self, 'cursor') and self.cursor:

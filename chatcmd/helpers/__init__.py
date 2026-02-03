@@ -142,16 +142,51 @@ class Helpers:
 
     @staticmethod
     def validate_input(prompt):
-        # Allow common natural language and shell characters
-        pattern = r'^[A-Za-z0-9\s_\-@\$\.,:;\/#\+\*=()\[\]{}<>!\\|&"\'?~`]+$'
-        return re.match(pattern, str(prompt)) is not None
+        """
+        Validate user input to prevent command injection.
+        Rejects backticks, $(), and other dangerous shell metacharacters.
+        """
+        prompt_str = str(prompt)
+
+        # Reject empty or whitespace-only input
+        if not prompt_str or not prompt_str.strip():
+            return False
+
+        # Reject dangerous patterns that could lead to command injection
+        dangerous_patterns = [
+            '`',           # Backtick command substitution
+            '$(',          # Modern command substitution
+            '${',          # Variable expansion with braces
+            ';;',          # Case statement terminators
+            '\x00',        # Null byte injection
+            '\r',          # Carriage return injection
+        ]
+        for pattern in dangerous_patterns:
+            if pattern in prompt_str:
+                return False
+
+        # Allow common natural language and safe shell characters
+        # Removed: backticks (`), dollar sign ($) to prevent injection
+        pattern = r'^[A-Za-z0-9\s_\-@\.,:;/#\+\*=()\[\]{}<>!\\|&"\'?~]+$'
+        return re.match(pattern, prompt_str) is not None
 
     @staticmethod
     def validate_api_key(api_key):
+        """
+        DEPRECATED: This function only validates OpenAI API key format.
+        Use EnhancedAPI.validate_provider_api_key() for provider-specific validation.
+        """
+        import warnings
+        warnings.warn(
+            "validate_api_key() is deprecated. Use EnhancedAPI.validate_provider_api_key() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
+        if not api_key or not isinstance(api_key, str):
+            return False
         if not api_key.startswith('sk-'):
             return False
-        # if len(api_key) != 51:
-        #     return False
         if not re.match("^[a-zA-Z0-9-_]+$", api_key):
             return False
         return True

@@ -8,12 +8,18 @@
 
 #### Boost Your Productivity, ***Say Goodbye*** to Manual Searches ####
 
-### What's New in 2.0
+### What's New in 2.2
+- **Security Hardened**: SQL injection prevention, secure API key storage, input validation hardening
+- **Secure Key Storage**: API keys stored in system keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service) with encrypted file fallback
+- **Command Injection Prevention**: Enhanced validation to block dangerous patterns (backticks, command substitution, variable expansion)
+- **Database Integrity Checks**: Automatic integrity verification on startup
+- **Error Message Sanitization**: Sensitive information redacted from error messages
+- **UUID v1 Privacy**: Uses randomized node to prevent MAC address exposure
+- **Google Genai Update**: Migrated to new google-genai package
 - Multi-provider workflow with unified model management (list models, model info, current model, performance stats)
 - Provider-specific API key storage via secure keyring; legacy OpenAI flags kept for backward compatibility
 - Optional length argument for `--random-password` (default 18)
 - Enhanced, colored help and unified header output
-- Stability and error handling improvements
 
 ## Features ##
 
@@ -70,9 +76,8 @@
 ### Developer Tools
 - **Regex Pattern Generator** - Create regex patterns for common use cases
 - **Base64 Encoder/Decoder** - Encode or decode base64 strings
-- **UUID Generator** - Generate UUIDs in different formats
+- **UUID Generator** - Generate UUIDs in different formats (v1 with privacy protection, v3, v4, v5)
 - **Timestamp Converter** - Convert between different timestamp formats
-- **QR Code Generator** - Generate QR codes for text/URLs
 
 #### Developer Tools Implementation Types
 
@@ -80,16 +85,15 @@
 |---------|---------------|--------------|----------|
 | **Regex Pattern Generator** | 🔴 Static Code | ❌ No AI | Instant response, predefined patterns |
 | **Base64 Encoder/Decoder** | 🔴 Static Code | ❌ No AI | Fast, built-in Python library |
-| **UUID Generator** | 🔴 Static Code | ❌ No AI | Fast, uses Python's uuid library |
+| **UUID Generator** | 🔴 Static Code | ❌ No AI | Fast, uses Python's uuid library with privacy protection |
 | **Timestamp Converter** | 🔴 Static Code | ❌ No AI | Reliable, uses datetime library |
-| **QR Code Generator** | 🟡 External API | ⚠️ External Service | Uses api.qrserver.com (not AI) |
 
 **Key Benefits:**
-- **86% Static Code**: Most tools work offline without API calls
+- **100% Static Code**: All developer tools work offline without API calls
 - **No AI Costs**: Developer tools don't consume AI API credits
 - **Fast Response**: Instant results without network latency
 - **Reliable**: No dependency on external AI services
-- **Offline Capable**: Works without internet (except QR codes)
+- **Fully Offline**: Works without internet connection
 
 ### Multi-Model AI Support
 - **OpenAI Models**: GPT-3.5 Turbo, GPT-4, GPT-4 Turbo
@@ -119,9 +123,9 @@ If pip not installed:
 Installation output should display:
 
     Collecting chatcmd
-    Using cached chatcmd-2.0.1-py3-none-any.whl (6.8 kB)
+    Using cached chatcmd-2.2.0-py3-none-any.whl
     Installing collected packages: chatcmd
-    Successfully installed chatcmd-2.0.1
+    Successfully installed chatcmd-2.2.0
 
 ### Upgrade ###
     pip3 install --upgrade chatcmd
@@ -195,7 +199,6 @@ Tools:
   --base64-decode                   decode base64 text.
   --generate-uuid <version>         generate UUID (1, 3, 4, 5).
   --timestamp-convert <format>      convert timestamp (unix, iso, readable).
-  --qr-code                         generate QR code for text/URL.
 
 Library Options:
   -k, --set-key                     set or update API key (legacy OpenAI only).
@@ -207,6 +210,7 @@ Library Options:
   --get-model-key <provider>        get API key for specific provider
   --current-model                   show current model and provider
   --performance-stats               show model performance statistics
+  --reset-config                    clear config and stored keys (with confirmation)
   -g, --get-cmd                     display the last command.
   -G, --get-last=<value>            display the last [number] of commands.
   -d, --delete-cmd                  delete the last command.
@@ -237,15 +241,15 @@ chatcmd --model gpt-4 --cmd "create a backup of my database"
 # Generate regex pattern
 chatcmd --regex-pattern "email validation"
 
+# Encode/decode base64
+chatcmd --base64-encode "Hello World"
+chatcmd --base64-decode "SGVsbG8gV29ybGQ="
 
-# Generate UUID
+# Generate UUID (versions 1, 3, 4, 5)
 chatcmd --generate-uuid 4
 
 # Convert timestamp
 chatcmd --timestamp-convert unix
-
-# Generate QR code
-chatcmd --qr-code
 ```
 
 ### Multi-Model Usage
