@@ -10,7 +10,7 @@ exclude = ["pyenv*", "tests*"]
 
 [project]
 name = "chatcmd"
-version = "2.2.0"
+version = "2.2.1"
 description = "Open-source AI CLI for command lookup, SQL generation, and developer tools with multi-model support (OpenAI, Anthropic, Google, Cohere, Ollama)."
 authors = [
     { name = "Naif Alshaye", email = "naif@naif.io" }

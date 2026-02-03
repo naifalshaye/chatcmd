@@ -3,13 +3,11 @@ Factory for creating AI providers
 Handles instantiation of different AI model providers
 """
 
-from typing import Optional, Dict, Any
-from chatcmd.providers.base import BaseAIProvider
-from chatcmd.providers.openai_provider import OpenAIProvider
-from chatcmd.providers.anthropic_provider import AnthropicProvider
-from chatcmd.providers.google_provider import GoogleProvider
-from chatcmd.providers.cohere_provider import CohereProvider
-from chatcmd.providers.ollama_provider import OllamaProvider
+from typing import Optional, Dict, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from chatcmd.providers.base import BaseAIProvider
+
 from chatcmd.config.model_config import ModelConfig
 
 
@@ -20,54 +18,60 @@ class ProviderFactory:
         self.model_config = ModelConfig()
         self._provider_cache = {}
     
-    def create_provider(self, model_name: str, api_key: str, **kwargs) -> Optional[BaseAIProvider]:
+    def create_provider(self, model_name: str, api_key: str, **kwargs) -> Optional["BaseAIProvider"]:
         """
         Create an AI provider for the specified model
-        
+
         Args:
             model_name: Name of the AI model
             api_key: API key for the provider
             **kwargs: Additional configuration parameters
-            
+
         Returns:
             AI provider instance or None if creation fails
         """
         model_info = self.model_config.get_model_info(model_name)
         if not model_info:
             return None
-        
+
         # Check cache first
         cache_key = f"{model_name}_{api_key[:10]}"
         if cache_key in self._provider_cache:
             return self._provider_cache[cache_key]
-        
+
         provider = None
-        
+
         try:
+            # Lazy imports to avoid circular dependencies
             if model_info.provider == 'openai':
+                from chatcmd.providers.openai_provider import OpenAIProvider
                 provider = OpenAIProvider(api_key, model_name=model_name, **kwargs)
             elif model_info.provider == 'anthropic':
+                from chatcmd.providers.anthropic_provider import AnthropicProvider
                 provider = AnthropicProvider(api_key, model_name=model_name, **kwargs)
             elif model_info.provider == 'google':
+                from chatcmd.providers.google_provider import GoogleProvider
                 provider = GoogleProvider(api_key, model_name=model_name, **kwargs)
             elif model_info.provider == 'cohere':
+                from chatcmd.providers.cohere_provider import CohereProvider
                 provider = CohereProvider(api_key, model_name=model_name, **kwargs)
             elif model_info.provider == 'ollama':
+                from chatcmd.providers.ollama_provider import OllamaProvider
                 provider = OllamaProvider(api_key, model_name=model_name, **kwargs)
             else:
                 return None
-            
+
             # Cache the provider
             if provider:
                 self._provider_cache[cache_key] = provider
-            
+
             return provider
-            
+
         except Exception as e:
             print(f"Error creating provider for {model_name}: {e}")
             return None
     
-    def get_provider_for_model(self, model_name: str, api_keys: Dict[str, str]) -> Optional[BaseAIProvider]:
+    def get_provider_for_model(self, model_name: str, api_keys: Dict[str, str]) -> Optional["BaseAIProvider"]:
         """
         Get provider for a model using stored API keys
         

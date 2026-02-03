@@ -54,12 +54,70 @@ class BaseAIProvider(ABC):
     def get_model_name(self) -> str:
         """
         Get the model name being used
-        
+
         Returns:
             Model name string
         """
         pass
-    
+
+    def _extract_command_from_response(self, response: str) -> Optional[str]:
+        """
+        Extract command from response when validation fails
+
+        Args:
+            response: Raw AI response
+
+        Returns:
+            Extracted command or None
+        """
+        lines = response.split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Remove common prefixes
+            prefixes = ['$', '>', 'Command:', 'Command is:', 'Use:', 'Try:']
+            for prefix in prefixes:
+                if line.startswith(prefix):
+                    line = line[len(prefix):].strip()
+
+            # Check if this line looks like a command
+            if self.is_valid_command(line):
+                return line
+
+        return None
+
+    def _extract_sql_from_response(self, response: str) -> Optional[str]:
+        """Extract SQL query from response that might contain extra text"""
+        lines = response.split('\n')
+        query_lines = []
+        found_sql_start = False
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Look for SQL keywords to start collecting
+            if any(keyword in line.upper() for keyword in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER']):
+                found_sql_start = True
+                query_lines.append(line)
+            elif found_sql_start:
+                if any(phrase in line.lower() for phrase in ['this query', 'the query', 'explanation', 'note:', 'this will', 'for example', 'you can']):
+                    break
+                # Only add non-empty lines that look like SQL
+                if line and not line.startswith(('--', '/*', '#')):
+                    query_lines.append(line)
+
+        if query_lines:
+            query = ' '.join(query_lines)
+            query = ' '.join(query.split())
+            return query
+
+        return None
+
     def clean_command_output(self, response: str) -> str:
         """
         Clean AI response to extract only the CLI command
